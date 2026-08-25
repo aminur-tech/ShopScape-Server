@@ -1,0 +1,181 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  phone        String?
+  passwordHash String
+  role         Role      @default(CUSTOMER)
+  addresses    Address[]
+  orders       Order[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Address {
+  id          String  @id @default(cuid())
+  userId      String
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label       String?
+  fullName    String
+  phone       String
+  division    String
+  district    String
+  area        String
+  addressLine String
+  isDefault   Boolean @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  image     String?
+  isActive  Boolean   @default(true)
+  products  Product[]
+  createdAt DateTime  @default(now())
+}
+
+model Product {
+  id              String      @id @default(cuid())
+  name            String
+  slug            String      @unique
+  description     String?
+  price           Int
+  discountPercent Int?
+  discountPrice   Int?
+  sizeChart       String?
+
+  // Product-এর জন্য common sizes
+  sizes           String[]    @default([])
+
+  // 0 = out of stock, 1 = in stock
+  stock           Int         @default(1)
+
+  images          String[]    @default([])
+
+  categoryId      String
+  category        Category    @relation(fields: [categoryId], references: [id])
+
+  isFeatured      Boolean     @default(false)
+  isActive        Boolean     @default(true)
+
+  orderItems      OrderItem[]
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([categoryId])
+}
+
+
+
+model OrderItem {
+  id               String  @id @default(cuid())
+  orderId          String
+  order            Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId        String
+  product          Product @relation(fields: [productId], references: [id])
+
+  name             String
+  price            Int
+  quantity         Int
+
+  selectedColor    String?
+  selectedSize     String?
+  selectedImageUrl String?
+
+  @@index([orderId])
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  userId          String?
+  user            User?       @relation(fields: [userId], references: [id])
+  guestEmail      String?
+  status          OrderStatus @default(PENDING)
+  paymentMethod   String      @default("COD") // "COD" | "BKASH" | "NAGAD"
+  transactionId   String?     // customer-provided TrxID for BKASH/NAGAD
+  paymentProofUrl String?     // uploaded payment screenshot for BKASH/NAGAD
+  fullName        String
+  phone           String
+  division        String
+  district        String
+  area            String
+  addressLine     String
+  subtotal        Int
+  deliveryFee     Int
+  total           Int
+  items           OrderItem[]
+  notifications   NotificationLog[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+
+
+model EmailVerification {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  purpose   String
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email, purpose])
+}
+
+model NotificationLog {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  event     String
+  channel   String   @default("EMAIL")
+  status    String
+  payload   Json?
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+}
+
+model Banner {
+  id        String   @id @default(cuid())
+  title     String?
+  imageUrl  String
+  linkUrl   String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
