@@ -15,13 +15,37 @@ import { asyncHandler } from "../utils/asyncHandler";
 
 const router = Router();
 
-const otpLimiter = rateLimit({ windowMs: 10 * 60 * 1000, max: 5 });
+
+
+const sendCodeLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req, res) => {
+    res.status(429).json({
+      error: "আপনি অনেকবার কোড পাঠানোর চেষ্টা করেছেন। কিছুক্ষণ পর আবার চেষ্টা করুন।",
+    });
+  },
+});
+
+const verifyCodeLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req, res) => {
+    res.status(429).json({
+      error: "আপনি অনেকবার ভুল কোড দিয়েছেন। কিছুক্ষণ পর আবার চেষ্টা করুন।",
+    });
+  },
+});
 
 router.get("/payment-config", asyncHandler(getPaymentConfig));
-router.post("/send-code", otpLimiter, validate({ body: sendCodeSchema }), asyncHandler(sendCheckoutCode));
+router.post("/send-code", sendCodeLimiter, validate({ body: sendCodeSchema }), asyncHandler(sendCheckoutCode));
 router.post(
   "/verify-code",
-  otpLimiter,
+  verifyCodeLimiter,
   validate({ body: verifyCodeSchema }),
   asyncHandler(verifyCheckoutCode)
 );
