@@ -20,7 +20,7 @@ export const env = {
   SMTP_PORT: Number(process.env.SMTP_PORT ?? 587),
   SMTP_USER: process.env.SMTP_USER ?? "",
   SMTP_PASS: process.env.SMTP_PASS ?? "",
-  SMTP_FROM: process.env.SMTP_FROM ?? "Shopno Fashion <no-reply@shopnofashion.com>",
+  SMTP_FROM: process.env.SMTP_FROM ?? "ShopScape <no-reply@shopnofashion.com>",
 
   FRONTEND_URL: process.env.FRONTEND_URL ?? "http://localhost:3000",
 
