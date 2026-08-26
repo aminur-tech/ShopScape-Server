@@ -2,18 +2,25 @@ import { Router } from "express";
 import rateLimit from "express-rate-limit";
 
 import { upload } from "../middleware/upload";
-import { authenticate, requireAdmin } from "../middleware/auth";
+import {
+  authenticate,
+  requireAdmin,
+} from "../middleware/auth";
+
 import { asyncHandler } from "../utils/asyncHandler";
-import { handleUpload } from "../controllers/upload.controller";
+
+import {
+  handleUpload,
+} from "../controllers/upload.controller";
 
 const router = Router();
 
-/**
- * Admin uploads
- * Product images, category images, banner images
- *
- * একসাথে সর্বোচ্চ 20টি image upload করা যাবে।
+/*
+ * =========================================================
+ * ADMIN IMAGE UPLOAD
+ * =========================================================
  */
+
 router.post(
   "/admin",
 
@@ -30,12 +37,12 @@ router.post(
   asyncHandler(handleUpload)
 );
 
-/**
- * Public upload
- * Payment-proof screenshots
- *
- * Security-এর জন্য payment proof-এ একসাথে সর্বোচ্চ 5টি file।
+/*
+ * =========================================================
+ * PAYMENT PROOF UPLOAD
+ * =========================================================
  */
+
 const proofLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
   max: 10,
@@ -47,7 +54,9 @@ router.post(
   proofLimiter,
 
   (req, _res, next) => {
-    req.uploadFolder = "payment-proofs";
+    req.uploadFolder =
+      "payment-proofs";
+
     next();
   },
 

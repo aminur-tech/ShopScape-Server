@@ -54,6 +54,7 @@ export const productInputSchema = z.object({
   price: z.number().int().min(0),
   discountPercent: z.number().int().min(0).max(100).optional(),
   sizeChart: z.string().optional(),
+  sizes: z.array(z.string()).default([]),
   stock: z.number().int().min(0).default(0),
   images: z.array(z.string()).default([]),
   categoryId: z.string(),
