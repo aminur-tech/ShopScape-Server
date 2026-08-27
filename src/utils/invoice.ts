@@ -4,28 +4,90 @@ import type { Order, OrderItem } from "@prisma/client";
 import fs from "fs";
 import path from "path";
 
-const STATUS_LABELS_BN: Record<string, string> = {
-  PENDING: "অপেক্ষমান",
-  CONFIRMED: "নিশ্চিত হয়েছে",
-  PROCESSING: "প্রসেসিং চলছে",
-  SHIPPED: "পাঠানো হয়েছে",
-  DELIVERED: "ডেলিভারি হয়েছে",
-  CANCELLED: "বাতিল হয়েছে",
-};
-
 const FONT_PATH = path.join(
-  process.cwd(),
+  __dirname,
+  "..",
+  "..",
   "fonts",
   "NotoSansBengali-Regular.ttf"
 );
 
 const hasBanglaFont = fs.existsSync(FONT_PATH);
 
+if (!hasBanglaFont) {
+  console.error(
+    `[invoice] Bangla font not found at ${FONT_PATH}`
+  );
+}
+
 type InvoiceOrder = Order & {
   items: OrderItem[];
 };
 
-export function streamInvoicePdf(
+/* =========================================================
+   FETCH REMOTE IMAGE
+========================================================= */
+
+async function fetchImageBuffer(
+  url: string | null | undefined
+): Promise<Buffer | null> {
+  if (!url) {
+    return null;
+  }
+
+  try {
+    const controller = new AbortController();
+
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, 10000);
+
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        Accept: "image/*",
+      },
+    });
+
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      console.error(
+        `[invoice] Image request failed: ${response.status} ${url}`
+      );
+
+      return null;
+    }
+
+    const contentType =
+      response.headers.get("content-type") || "";
+
+    if (!contentType.startsWith("image/")) {
+      console.error(
+        `[invoice] Invalid image content type: ${contentType}`
+      );
+
+      return null;
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+
+    return Buffer.from(arrayBuffer);
+  } catch (error) {
+    console.error(
+      "[invoice] Image fetch error:",
+      error
+    );
+
+    return null;
+  }
+}
+
+/* =========================================================
+   MAIN PDF
+========================================================= */
+
+export async function streamInvoicePdf(
   res: Response,
   order: InvoiceOrder
 ) {
@@ -33,6 +95,7 @@ export function streamInvoicePdf(
     size: "A4",
     margin: 0,
     bufferPages: true,
+
     info: {
       Title: `Invoice ${order.orderNumber}`,
       Author: "ShopScape",
@@ -41,7 +104,14 @@ export function streamInvoicePdf(
     },
   });
 
-  res.setHeader("Content-Type", "application/pdf");
+  /* =======================================================
+     RESPONSE
+  ======================================================= */
+
+  res.setHeader(
+    "Content-Type",
+    "application/pdf"
+  );
 
   res.setHeader(
     "Content-Disposition",
@@ -50,37 +120,51 @@ export function streamInvoicePdf(
 
   doc.pipe(res);
 
-  // --------------------------------------------------
-  // COLORS
-  // --------------------------------------------------
+  /* =======================================================
+     COLORS
+  ======================================================= */
 
   const BG = "#F5F6FF";
   const WHITE = "#FFFFFF";
   const TEXT = "#171717";
   const MUTED = "#777777";
+
   const PURPLE = "#7B3FA0";
   const PINK = "#FF2E88";
   const ORANGE = "#FF5A00";
-  const GREEN = "#20D5A5";
+
   const BORDER = "#E2E4EC";
   const LIGHT = "#FAFAFC";
+  const IMAGE_BG = "#F3F4F6";
 
-  // --------------------------------------------------
-  // PAGE
-  // --------------------------------------------------
+  /* =======================================================
+     PAGE
+  ======================================================= */
 
   const pageWidth = doc.page.width;
   const pageHeight = doc.page.height;
 
   const margin = 35;
-  const contentWidth = pageWidth - margin * 2;
 
-  // Background
-  doc.rect(0, 0, pageWidth, pageHeight).fill(BG);
+  const contentWidth =
+    pageWidth - margin * 2;
 
-  // --------------------------------------------------
-  // HELPERS
-  // --------------------------------------------------
+  /* =======================================================
+     BACKGROUND
+  ======================================================= */
+
+  doc
+    .rect(
+      0,
+      0,
+      pageWidth,
+      pageHeight
+    )
+    .fill(BG);
+
+  /* =======================================================
+     HELPERS
+  ======================================================= */
 
   function setFont(size = 10) {
     if (hasBanglaFont) {
@@ -92,16 +176,27 @@ export function streamInvoicePdf(
     doc.fontSize(size);
   }
 
-  function money(value: number | string | null | undefined) {
-    return `৳${Number(value ?? 0).toLocaleString("en-BD")}`;
+  function money(
+    value:
+      | number
+      | string
+      | null
+      | undefined
+  ) {
+    return `৳${Number(
+      value ?? 0
+    ).toLocaleString("en-BD")}`;
   }
 
   function formatDate(date: Date) {
-    return new Intl.DateTimeFormat("en-BD", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }).format(new Date(date));
+    return new Intl.DateTimeFormat(
+      "en-BD",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }
+    ).format(new Date(date));
   }
 
   function roundedCard(
@@ -109,71 +204,116 @@ export function streamInvoicePdf(
     y: number,
     width: number,
     height: number,
-    radius = 7
+    radius = 8
   ) {
     doc
-      .roundedRect(x, y, width, height, radius)
-      .fillAndStroke(WHITE, BORDER);
+      .roundedRect(
+        x,
+        y,
+        width,
+        height,
+        radius
+      )
+      .fillAndStroke(
+        WHITE,
+        BORDER
+      );
   }
 
-  function line(
+  function drawLine(
     x1: number,
     y1: number,
     x2: number,
-    y2: number
+    y2: number,
+    color = BORDER
   ) {
     doc
       .moveTo(x1, y1)
       .lineTo(x2, y2)
-      .strokeColor(BORDER)
+      .strokeColor(color)
+      .lineWidth(1)
       .stroke();
   }
 
-  // --------------------------------------------------
-  // INVOICE CARD
-  // --------------------------------------------------
+  function drawPlaceholder(
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ) {
+    doc
+      .roundedRect(
+        x,
+        y,
+        width,
+        height,
+        6
+      )
+      .fill(IMAGE_BG);
+
+    setFont(7);
+
+    doc
+      .fillColor(MUTED)
+      .text(
+        "No Image",
+        x,
+        y + height / 2 - 4,
+        {
+          width,
+          align: "center",
+        }
+      );
+  }
+
+  /* =======================================================
+     MAIN CARD
+  ======================================================= */
 
   const cardX = margin;
-  const cardY = 35;
+  const cardY = 30;
   const cardWidth = contentWidth;
-  const cardHeight = 680;
+
+  const mainCardHeight = 700;
 
   roundedCard(
     cardX,
     cardY,
     cardWidth,
-    cardHeight,
-    7
+    mainCardHeight
   );
 
-  // --------------------------------------------------
-  // INVOICE TITLE
-  // --------------------------------------------------
+  /* =======================================================
+     TITLE
+  ======================================================= */
 
-  setFont(16);
+  setFont(17);
 
   doc
     .fillColor(PURPLE)
     .text(
       "INVOICE",
       cardX,
-      cardY + 28,
+      cardY + 22,
       {
         width: cardWidth,
         align: "center",
       }
     );
 
-  // --------------------------------------------------
-  // SHOPSCAPE LOGO
-  // --------------------------------------------------
+  /* =======================================================
+     LOGO
+  ======================================================= */
 
-  const logoSize = 46;
+  const logoSize = 45;
 
   const logoX =
-    cardX + cardWidth / 2 - logoSize / 2;
+    cardX +
+    cardWidth / 2 -
+    logoSize / 2;
 
-  const logoY = cardY + 65;
+  const logoY =
+    cardY + 58;
 
   doc
     .roundedRect(
@@ -185,7 +325,7 @@ export function streamInvoicePdf(
     )
     .fill(ORANGE);
 
-  setFont(28);
+  setFont(27);
 
   doc
     .fillColor(WHITE)
@@ -199,9 +339,9 @@ export function streamInvoicePdf(
       }
     );
 
-  // --------------------------------------------------
-  // SHOP NAME
-  // --------------------------------------------------
+  /* =======================================================
+     SHOP NAME
+  ======================================================= */
 
   setFont(16);
 
@@ -210,70 +350,87 @@ export function streamInvoicePdf(
     .text(
       "ShopScape",
       cardX,
-      logoY + 57,
+      logoY + 54,
       {
         width: cardWidth,
         align: "center",
       }
     );
 
-  setFont(10);
+  setFont(9);
 
   doc
-    .fillColor(TEXT)
+    .fillColor(MUTED)
     .text(
       "Mohammadpur, Dhaka, Bangladesh",
       cardX,
-      logoY + 81,
+      logoY + 77,
       {
         width: cardWidth,
         align: "center",
       }
     );
 
-  // --------------------------------------------------
-  // DIVIDER
-  // --------------------------------------------------
+  /* =======================================================
+     DIVIDER
+  ======================================================= */
 
-  const dividerY = logoY + 118;
+  const dividerY =
+    logoY + 110;
 
-  line(
+  drawLine(
     cardX + 20,
     dividerY,
     cardX + cardWidth - 20,
     dividerY
   );
 
-  // --------------------------------------------------
-  // ORDER INFORMATION
-  // --------------------------------------------------
+  /* =======================================================
+     ORDER INFO
+  ======================================================= */
 
-  let infoY = dividerY + 28;
+  let infoY =
+    dividerY + 22;
 
-  const labelX = cardX + 25;
-  const valueX = cardX + 105;
+  const labelX =
+    cardX + 25;
 
-  setFont(9.5);
+  const valueX =
+    cardX + 105;
 
-  // Order ID
-  doc.fillColor(TEXT).text(
-    "Order ID",
-    labelX,
-    infoY
-  );
+  setFont(9);
 
   doc
     .fillColor(TEXT)
     .text(
-      `: ${order.orderNumber}`,
-      valueX,
+      "Order ID",
+      labelX,
       infoY
     );
 
-  // Mobile
-  infoY += 22;
+  doc.text(
+    `: ${order.orderNumber}`,
+    valueX,
+    infoY
+  );
 
-  doc.fillColor(TEXT).text(
+  infoY += 19;
+
+  doc.text(
+    "Date",
+    labelX,
+    infoY
+  );
+
+  doc.text(
+    `: ${formatDate(order.createdAt)}`,
+    valueX,
+    infoY
+  );
+
+  infoY += 19;
+
+  doc.text(
     "Mobile",
     labelX,
     infoY
@@ -285,10 +442,9 @@ export function streamInvoicePdf(
     infoY
   );
 
-  // Name
-  infoY += 22;
+  infoY += 19;
 
-  doc.fillColor(TEXT).text(
+  doc.text(
     "Name",
     labelX,
     infoY
@@ -300,14 +456,11 @@ export function streamInvoicePdf(
     infoY
   );
 
-  // Address
-  infoY += 22;
+  infoY += 19;
 
-  doc.fillColor(TEXT).text(
-    "Address",
-    labelX,
-    infoY
-  );
+  /* =======================================================
+     ADDRESS
+  ======================================================= */
 
   const address = [
     order.division,
@@ -319,22 +472,59 @@ export function streamInvoicePdf(
     .join(" > ");
 
   doc.text(
-    `: ${address}`,
+    "Address",
+    labelX,
+    infoY
+  );
+
+  doc.text(
+    `: ${address || "N/A"}`,
     valueX,
     infoY,
     {
       width: cardWidth - 145,
+      height: 35,
     }
   );
 
-  // COD
-  infoY += 22;
+  infoY += 30;
 
-  doc.fillColor(TEXT).text(
-    "COD TK",
+  /* =======================================================
+     PAYMENT
+  ======================================================= */
+
+  doc.text(
+    "Payment",
     labelX,
     infoY
   );
+
+  const paymentLabel =
+    order.paymentMethod === "BKASH"
+      ? "bKash"
+      : order.paymentMethod === "NAGAD"
+      ? "Nagad"
+      : "Cash on Delivery";
+
+  doc.text(
+    `: ${paymentLabel}`,
+    valueX,
+    infoY
+  );
+
+  infoY += 19;
+
+  /* =======================================================
+     TOTAL
+  ======================================================= */
+
+  doc
+    .fillColor(PINK)
+    .text(
+      "Total",
+      labelX,
+      infoY
+    );
 
   setFont(10);
 
@@ -346,24 +536,34 @@ export function streamInvoicePdf(
       infoY
     );
 
-  // --------------------------------------------------
-  // ORDER ITEMS TABLE
-  // --------------------------------------------------
+  /* =======================================================
+     ITEMS TABLE
+  ======================================================= */
 
-  const tableX = cardX + 20;
+  const tableX =
+    cardX + 20;
 
-  const tableY = infoY + 30;
+  const tableY =
+    infoY + 27;
 
-  const tableWidth = cardWidth - 40;
+  const tableWidth =
+    cardWidth - 40;
 
-  const imageWidth = 85;
-  const productWidth = 300;
+  const imageWidth = 75;
+
+  const productWidth = 315;
+
   const priceWidth =
-    tableWidth - imageWidth - productWidth;
+    tableWidth -
+    imageWidth -
+    productWidth;
 
-  const headerHeight = 32;
+  const headerHeight = 29;
 
-  // Header
+  /* =======================================================
+     TABLE HEADER
+  ======================================================= */
+
   doc
     .rect(
       tableX,
@@ -383,40 +583,81 @@ export function streamInvoicePdf(
     .strokeColor(BORDER)
     .stroke();
 
-  setFont(9);
+  setFont(8.5);
 
   doc
     .fillColor(TEXT)
     .text(
       "Image",
       tableX + 8,
-      tableY + 10
+      tableY + 9
     );
 
   doc.text(
-    "Product_Info",
-    tableX + imageWidth + 8,
-    tableY + 10
+    "Product",
+    tableX +
+      imageWidth +
+      8,
+    tableY + 9
   );
 
   doc.text(
-    "Price",
+    "Total",
     tableX +
       imageWidth +
       productWidth +
       8,
-    tableY + 10
+    tableY + 9
   );
 
-  // --------------------------------------------------
-  // TABLE ROWS
-  // --------------------------------------------------
+  /* =======================================================
+     FETCH PRODUCT IMAGES
+  ======================================================= */
+
+  const itemImages =
+    await Promise.all(
+      order.items.map(
+        async (item) => {
+          console.log(
+            `[invoice] Product: ${item.name}`
+          );
+
+          console.log(
+            `[invoice] Image URL: ${
+              item.selectedImageUrl ?? "null"
+            }`
+          );
+
+          if (!item.selectedImageUrl) {
+            return null;
+          }
+
+          return fetchImageBuffer(
+            item.selectedImageUrl
+          );
+        }
+      )
+    );
+
+  /* =======================================================
+     TABLE ROWS
+  ======================================================= */
 
   let currentY =
-    tableY + headerHeight;
+    tableY +
+    headerHeight;
 
-  for (const item of order.items) {
-    const rowHeight = 72;
+  for (
+    const [
+      index,
+      item,
+    ] of order.items.entries()
+  ) {
+    const rowHeight = 82;
+
+    /* =====================================================
+       ROW
+    ===================================================== */
 
     doc
       .rect(
@@ -430,16 +671,18 @@ export function streamInvoicePdf(
         BORDER
       );
 
-    // Vertical line 1
-    line(
+    /* =====================================================
+       SEPARATORS
+    ===================================================== */
+
+    drawLine(
       tableX + imageWidth,
       currentY,
       tableX + imageWidth,
       currentY + rowHeight
     );
 
-    // Vertical line 2
-    line(
+    drawLine(
       tableX +
         imageWidth +
         productWidth,
@@ -450,79 +693,133 @@ export function streamInvoicePdf(
       currentY + rowHeight
     );
 
-    // ------------------------------------------------
-    // PRODUCT IMAGE
-    // ------------------------------------------------
+    /* =====================================================
+       PRODUCT IMAGE
+    ===================================================== */
 
-    const possibleImage =
-      (item as OrderItem & {
-        image?: string | null;
-        imageUrl?: string | null;
-      }).imageUrl ??
-      (item as OrderItem & {
-        image?: string | null;
-      }).image ??
-      null;
+    const imageX =
+      tableX + 9;
 
-    if (possibleImage) {
+    const imageY =
+      currentY + 8;
+
+    const imageSize = 64;
+
+    const imageBuffer =
+      itemImages[index];
+
+    if (imageBuffer) {
       try {
         doc.image(
-          possibleImage,
-          tableX + 8,
-          currentY + 8,
+          imageBuffer,
+          imageX,
+          imageY,
           {
-            fit: [60, 55],
+            fit: [
+              imageSize,
+              imageSize,
+            ],
             align: "center",
             valign: "center",
           }
         );
-      } catch {
-        // Ignore invalid image URL/path
+      } catch (error) {
+        console.error(
+          "[invoice] PDF image render failed:",
+          error
+        );
+
+        drawPlaceholder(
+          imageX,
+          imageY,
+          imageSize,
+          imageSize
+        );
       }
+    } else {
+      drawPlaceholder(
+        imageX,
+        imageY,
+        imageSize,
+        imageSize
+      );
     }
 
-    // ------------------------------------------------
-    // PRODUCT INFO
-    // ------------------------------------------------
+    /* =====================================================
+       PRODUCT DETAILS
+    ===================================================== */
 
     const productX =
-      tableX + imageWidth + 8;
+      tableX +
+      imageWidth +
+      8;
+
+    /* Product Name */
 
     setFont(9);
 
     doc
-      .fillColor("#555555")
+      .fillColor(TEXT)
       .text(
-        `Code: ${
-          (item as any).productCode ??
-          (item as any).code ??
-          "-"
-        }`,
+        item.name,
         productX,
-        currentY + 10
+        currentY + 8,
+        {
+          width:
+            productWidth - 18,
+          height: 22,
+          ellipsis: true,
+        }
       );
 
-    const size =
-      (item as any).size ??
-      "-";
+    /* =====================================================
+       SIZE / COLOR / QUANTITY
+    ===================================================== */
 
-    doc.text(
-      `Size: ${size}`,
-      productX,
-      currentY + 26
-    );
+    let detailY =
+      currentY + 31;
 
-    doc.text(
-      `Qty: ${item.quantity} X ${money(
-        Number(item.price)
-      )}`,
-      productX,
-      currentY + 42
-    );
+    if (item.selectedSize) {
+      setFont(8);
 
-    // ------------------------------------------------
-    // PRICE
-    // ------------------------------------------------
+      doc
+        .fillColor(MUTED)
+        .text(
+          `Size: ${item.selectedSize}`,
+          productX,
+          detailY
+        );
+
+      detailY += 14;
+    }
+
+    if (item.selectedColor) {
+      setFont(8);
+
+      doc
+        .fillColor(MUTED)
+        .text(
+          `Color: ${item.selectedColor}`,
+          productX,
+          detailY
+        );
+
+      detailY += 14;
+    }
+
+    setFont(8);
+
+    doc
+      .fillColor(MUTED)
+      .text(
+        `Quantity: ${item.quantity}`,
+        productX,
+        detailY
+      );
+
+    /* =====================================================
+       PRICE
+    ===================================================== */
 
     const priceX =
       tableX +
@@ -530,122 +827,71 @@ export function streamInvoicePdf(
       productWidth +
       8;
 
-    setFont(10);
+    setFont(9.5);
 
     doc
       .fillColor(PINK)
       .text(
-        money(Number(item.price) * item.quantity),
+        money(
+          Number(item.price) *
+            Number(item.quantity)
+        ),
         priceX,
-        currentY + 28
+        currentY + 30,
+        {
+          width:
+            priceWidth - 12,
+        }
       );
 
     currentY += rowHeight;
   }
 
-  // --------------------------------------------------
-  // THANK YOU MESSAGE
-  // --------------------------------------------------
+  /* =======================================================
+     THANK YOU
+  ======================================================= */
 
   const thankYouY =
-    currentY + 20;
-
-  setFont(10);
-
-  doc
-    .fillColor(TEXT)
-    .text(
-      `Dear ${order.fullName}, thanks for confirm the order.`,
-      cardX + 20,
-      thankYouY,
-      {
-        width: cardWidth - 40,
-      }
-    );
-
-  // --------------------------------------------------
-  // STATUS SECTION
-  // --------------------------------------------------
-
-  const statusCardY =
-    thankYouY + 35;
-
-  const statusCardHeight = 105;
-
-  roundedCard(
-    cardX,
-    statusCardY,
-    cardWidth,
-    statusCardHeight,
-    7
-  );
-
-  setFont(13);
-
-  doc
-    .fillColor(PURPLE)
-    .text(
-      "Delivery Status Details",
-      cardX,
-      statusCardY + 16,
-      {
-        width: cardWidth,
-        align: "center",
-      }
-    );
-
-  setFont(8.5);
-
-  doc
-    .fillColor("#555555")
-    .text(
-      "পার্সেল ট্র্যাকিং লিংকটি অর্ডার কনফার্মের মাধ্যমে আপডেট হবে",
-      cardX + 15,
-      statusCardY + 45,
-      {
-        width: cardWidth - 30,
-        align: "center",
-      }
-    );
-
-  // --------------------------------------------------
-  // STATUS
-  // --------------------------------------------------
-
-  const statusText =
-    STATUS_LABELS_BN[order.status] ??
-    order.status;
-
-  const statusY =
-    statusCardY + 72;
+    currentY + 17;
 
   setFont(9);
 
   doc
-    .fillColor("#008844")
+    .fillColor(TEXT)
     .text(
-      `Seller » ${statusText}`,
-      cardX + 40,
-      statusY
+      `প্রিয় ${
+        order.fullName || "Customer"
+      }, আপনার অর্ডারের জন্য ধন্যবাদ।`,
+      cardX + 20,
+      thankYouY,
+      {
+        width:
+          cardWidth - 40,
+        align: "center",
+      }
     );
 
-  // --------------------------------------------------
-  // FOOTER
-  // --------------------------------------------------
+  /* =======================================================
+     FOOTER
+  ======================================================= */
 
-  setFont(8);
+  setFont(7.5);
 
   doc
     .fillColor("#999999")
     .text(
       `ShopScape • Invoice ${order.orderNumber}`,
       cardX,
-      pageHeight - 35,
+      pageHeight - 28,
       {
         width: cardWidth,
         align: "center",
       }
     );
+
+  /* =======================================================
+     END
+  ======================================================= */
 
   doc.end();
 }

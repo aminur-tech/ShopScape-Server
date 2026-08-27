@@ -36,9 +36,9 @@ model User {
 }
 
 model Address {
-  id          String  @id @default(cuid())
+  id          String   @id @default(cuid())
   userId      String
-  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   label       String?
   fullName    String
   phone       String
@@ -46,7 +46,7 @@ model Address {
   district    String
   area        String
   addressLine String
-  isDefault   Boolean @default(false)
+  isDefault   Boolean  @default(false)
   createdAt   DateTime @default(now())
 
   @@index([userId])
@@ -63,9 +63,9 @@ model Category {
 }
 
 model Product {
-  id              String      @id @default(cuid())
+  id              String  @id @default(cuid())
   name            String
-  slug            String      @unique
+  slug            String  @unique
   description     String?
   price           Int
   discountPercent Int?
@@ -73,40 +73,38 @@ model Product {
   sizeChart       String?
 
   // Product-এর জন্য common sizes
-  sizes           String[]    @default([])
+  sizes String[] @default([])
 
   // 0 = out of stock, 1 = in stock
-  stock           Int         @default(1)
+  stock Int @default(1)
 
-  images          String[]    @default([])
+  images String[] @default([])
 
-  categoryId      String
-  category        Category    @relation(fields: [categoryId], references: [id])
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
 
-  isFeatured      Boolean     @default(false)
-  isActive        Boolean     @default(true)
+  isFeatured Boolean @default(false)
+  isActive   Boolean @default(true)
 
-  orderItems      OrderItem[]
+  orderItems OrderItem[]
 
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([categoryId])
 }
 
-
-
 model OrderItem {
-  id               String  @id @default(cuid())
-  orderId          String
-  order            Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  productId        String
-  product          Product @relation(fields: [productId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
 
-  name             String
-  price            Int
-  quantity         Int
+  name     String
+  price    Int
+  quantity Int
 
   selectedColor    String?
   selectedSize     String?
@@ -116,34 +114,58 @@ model OrderItem {
 }
 
 model Order {
-  id              String      @id @default(cuid())
-  orderNumber     String      @unique
-  userId          String?
-  user            User?       @relation(fields: [userId], references: [id])
-  guestEmail      String?
-  status          OrderStatus @default(PENDING)
-  paymentMethod   String      @default("COD") // "COD" | "BKASH" | "NAGAD"
-  transactionId   String?     // customer-provided TrxID for BKASH/NAGAD
-  paymentProofUrl String?     // uploaded payment screenshot for BKASH/NAGAD
-  fullName        String
-  phone           String
-  division        String
-  district        String
-  area            String
-  addressLine     String
-  subtotal        Int
-  deliveryFee     Int
-  total           Int
-  items           OrderItem[]
-  notifications   NotificationLog[]
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id          String @id @default(cuid())
+  orderNumber String @unique
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  guestEmail String?
+
+  status OrderStatus @default(PENDING)
+
+  courierName        String?
+  courierTrackingUrl String?
+
+  paymentMethod   String  @default("COD")
+  transactionId   String?
+  paymentProofUrl String?
+
+  // Previous return / delivery charge protection
+  returnRequired Boolean @default(false)
+
+  deliveryPaymentRequired Boolean @default(false)
+
+  deliveryPaymentMethod String?
+
+  deliveryPaymentStatus String?
+
+  deliveryTransactionId String?
+
+  deliveryPaymentProofUrl String?
+
+  fullName String
+  phone    String
+
+  division    String
+  district    String
+  area        String
+  addressLine String
+
+  subtotal    Int
+  deliveryFee Int
+  total       Int
+
+  items         OrderItem[]
+  notifications NotificationLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([status])
+  @@index([phone])
 }
-
-
 
 model EmailVerification {
   id        String   @id @default(cuid())

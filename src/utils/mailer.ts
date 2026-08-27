@@ -625,3 +625,140 @@ export async function verifyMailerConnection() {
     "[mailer] SMTP connection verified successfully."
   );
 }
+
+export async function sendAdminOrderMessageEmail({
+  email,
+  orderNumber,
+  subject,
+  message,
+}: {
+  email: string;
+  orderNumber: string;
+  subject: string;
+  message: string;
+}) {
+  const safeMessage = message
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\n/g, "<br />");
+
+  const trackUrl =
+    `${FRONTEND_URL}/track-order?order=${encodeURIComponent(
+      orderNumber
+    )}`;
+
+  const html = emailLayout(
+    `
+      <div>
+
+        <h1
+          style="
+            margin:0;
+            color:#111827;
+            font-size:24px;
+          "
+        >
+          ${subject}
+        </h1>
+
+        <p
+          style="
+            margin:16px 0 0;
+            color:#4b5563;
+            font-size:15px;
+            line-height:1.7;
+          "
+        >
+          প্রিয় গ্রাহক,
+        </p>
+
+        <div
+          style="
+            margin:24px 0;
+            padding:20px;
+            background:#f9fafb;
+            border:1px solid #e5e7eb;
+            border-radius:12px;
+            color:#374151;
+            font-size:15px;
+            line-height:1.8;
+          "
+        >
+          ${safeMessage}
+        </div>
+
+        <div
+          style="
+            margin:20px 0;
+            padding:16px;
+            background:#f3f4f6;
+            border-radius:10px;
+          "
+        >
+          <div
+            style="
+              color:#6b7280;
+              font-size:12px;
+            "
+          >
+            অর্ডার নম্বর
+          </div>
+
+          <div
+            style="
+              margin-top:5px;
+              color:#111827;
+              font-weight:700;
+              font-size:17px;
+            "
+          >
+            ${orderNumber}
+          </div>
+        </div>
+
+        <div
+          style="
+            text-align:center;
+            margin:28px 0;
+          "
+        >
+          <a
+            href="${trackUrl}"
+            style="
+              display:inline-block;
+              background:#111827;
+              color:#ffffff;
+              padding:13px 26px;
+              border-radius:8px;
+              font-size:14px;
+              font-weight:700;
+            "
+          >
+            অর্ডার ট্র্যাক করুন
+          </a>
+        </div>
+
+        <p
+          style="
+            margin:20px 0 0;
+            color:#374151;
+            font-size:14px;
+            line-height:1.7;
+          "
+        >
+          ধন্যবাদ,<br />
+          <strong>${SHOP_NAME} Team</strong>
+        </p>
+
+      </div>
+    `,
+    `ShopScape থেকে আপনার অর্ডার ${orderNumber} সম্পর্কে নতুন বার্তা`
+  );
+
+  return sendMail(
+    email,
+    `${subject} | ${SHOP_NAME}`,
+    html
+  );
+}
