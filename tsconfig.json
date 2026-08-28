@@ -1,10 +1,10 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
 
-    "lib": ["ES2020"],
+    "lib": ["ES2022"],
 
     "rootDir": "src",
     "outDir": "dist",
@@ -19,9 +19,7 @@
 
     "resolveJsonModule": true,
 
-    "sourceMap": true,
-
-    "ignoreDeprecations": "6.0"
+    "sourceMap": true
   },
 
   "include": ["src"],
