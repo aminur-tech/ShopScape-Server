@@ -1,7 +1,14 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
+
 import { prisma } from "../../config/prisma";
 import { AppError } from "../../middleware/errorHandler";
+
+/*
+|--------------------------------------------------------------------------
+| Slugify
+|--------------------------------------------------------------------------
+*/
 
 function slugify(text: string): string {
   return text
@@ -12,96 +19,468 @@ function slugify(text: string): string {
     .replace(/-+/g, "-");
 }
 
-// discountPercent is the source of truth for a % discount; discountPrice is
-// derived and stored alongside it so storefront reads stay a single query.
-// e.g. price=1000, discountPercent=10 -> discountPrice=900
-function computeDiscountPrice(price: number, discountPercent?: number | null): number | null {
+/*
+|--------------------------------------------------------------------------
+| Discount Price
+|--------------------------------------------------------------------------
+*/
+
+function computeDiscountPrice(
+  price: number,
+  discountPercent?: number | null
+): number | null {
   if (discountPercent == null) return null;
-  return Math.round(price - (price * discountPercent) / 100);
+
+  return Math.round(
+    price - (price * discountPercent) / 100
+  );
 }
 
-export async function adminGetProduct(req: Request, res: Response) {
-  const product = await prisma.product.findUnique({ where: { id: req.params.id } });
-  if (!product) throw new AppError("Product not found", 404);
-  res.json({ product });
+/*
+|--------------------------------------------------------------------------
+| Get Single Product
+|--------------------------------------------------------------------------
+*/
+
+export async function adminGetProduct(
+  req: Request,
+  res: Response
+) {
+  const product = await prisma.product.findUnique({
+    where: {
+      id: req.params.id,
+    },
+
+    include: {
+      category: {
+        include: {
+          parent: true,
+        },
+      },
+    },
+  });
+
+  if (!product) {
+    throw new AppError(
+      "Product not found",
+      404
+    );
+  }
+
+  res.json({
+    product,
+  });
 }
 
-export async function adminListProducts(req: Request, res: Response) {
-  const page = Number(req.query.page ?? 1);
-  const limit = Number(req.query.limit ?? 20);
-  const q = typeof req.query.q === "string" ? req.query.q : undefined;
+/*
+|--------------------------------------------------------------------------
+| List Products
+|--------------------------------------------------------------------------
+*/
 
-  const where = q ? { name: { contains: q, mode: "insensitive" as const } } : {};
+export async function adminListProducts(
+  req: Request,
+  res: Response
+) {
+  const page = Math.max(
+    Number(req.query.page ?? 1),
+    1
+  );
 
-  const [products, total] = await Promise.all([
+  const limit = Math.min(
+    Math.max(
+      Number(req.query.limit ?? 20),
+      1
+    ),
+    100
+  );
+
+  const q =
+    typeof req.query.q === "string"
+      ? req.query.q.trim()
+      : undefined;
+
+  const where = q
+    ? {
+        name: {
+          contains: q,
+          mode: "insensitive" as const,
+        },
+      }
+    : {};
+
+  const [
+    products,
+    total,
+  ] = await Promise.all([
     prisma.product.findMany({
       where,
-      include: { category: { select: { name: true } } },
-      orderBy: { createdAt: "desc" },
+
+      include: {
+        category: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            parentId: true,
+
+            parent: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
+            },
+          },
+        },
+      },
+
+      orderBy: {
+        createdAt: "desc",
+      },
+
       skip: (page - 1) * limit,
       take: limit,
     }),
-    prisma.product.count({ where }),
+
+    prisma.product.count({
+      where,
+    }),
   ]);
 
-  res.json({ products, pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
+  res.json({
+    products,
+
+    pagination: {
+      page,
+      limit,
+      total,
+      pages: Math.ceil(
+        total / limit
+      ),
+    },
+  });
 }
 
-export const productInputSchema = z.object({
-  name: z.string().min(2),
-  slug: z.string().min(2).optional(),
-  description: z.string().optional(),
-  price: z.number().int().min(0),
-  discountPercent: z.number().int().min(0).max(100).optional(),
-  sizeChart: z.string().optional(),
-  sizes: z.array(z.string()).default([]),
-  stock: z.number().int().min(0).default(0),
-  images: z.array(z.string()).default([]),
-  categoryId: z.string(),
-  isFeatured: z.boolean().default(false),
-  isActive: z.boolean().default(true),
-});
+/*
+|--------------------------------------------------------------------------
+| Product Input Schema
+|--------------------------------------------------------------------------
+*/
 
-export async function adminCreateProduct(req: Request, res: Response) {
-  const data = req.body as z.infer<typeof productInputSchema>;
-  const slug = data.slug ? slugify(data.slug) : slugify(data.name);
-  const discountPrice = computeDiscountPrice(data.price, data.discountPercent);
+export const productInputSchema =
+  z.object({
+    name: z
+      .string()
+      .min(2),
 
-  const product = await prisma.product.create({ data: { ...data, slug, discountPrice } });
-  res.status(201).json({ product });
-}
+    slug: z
+      .string()
+      .min(2)
+      .optional(),
 
-export async function adminUpdateProduct(req: Request, res: Response) {
-  const data = req.body as Partial<z.infer<typeof productInputSchema>>;
+    description:
+      z.string().optional(),
 
-  // If price or discountPercent changed, recompute discountPrice using the
-  // final values (falling back to what's already stored for whichever
-  // field wasn't sent in this request).
-  let discountPriceUpdate: { discountPrice: number | null } | {} = {};
-  if (data.price !== undefined || data.discountPercent !== undefined) {
-    const existing = await prisma.product.findUnique({ where: { id: req.params.id } });
-    if (!existing) throw new AppError("Product not found", 404);
-    const price = data.price ?? existing.price;
-    const discountPercent = data.discountPercent !== undefined ? data.discountPercent : existing.discountPercent;
-    discountPriceUpdate = { discountPrice: computeDiscountPrice(price, discountPercent) };
+    price: z
+      .number()
+      .int()
+      .min(0),
+
+    discountPercent: z
+      .number()
+      .int()
+      .min(0)
+      .max(100)
+      .optional(),
+
+    sizeChart:
+      z.string().optional(),
+
+    sizes: z
+      .array(z.string())
+      .default([]),
+
+    /*
+     * 0 = out of stock
+     * 1 = in stock
+     */
+    stock: z
+      .number()
+      .int()
+      .min(0)
+      .max(1)
+      .default(1),
+
+    images: z
+      .array(z.string())
+      .default([]),
+
+    categoryId:
+      z.string(),
+
+    isFeatured:
+      z.boolean().default(false),
+
+    isActive:
+      z.boolean().default(true),
+  });
+
+/*
+|--------------------------------------------------------------------------
+| Create Product
+|--------------------------------------------------------------------------
+*/
+
+export async function adminCreateProduct(
+  req: Request,
+  res: Response
+) {
+  const data =
+    productInputSchema.parse(
+      req.body
+    );
+
+  /*
+   * Verify category
+   */
+
+  const category =
+    await prisma.category.findUnique({
+      where: {
+        id: data.categoryId,
+      },
+    });
+
+  if (!category) {
+    throw new AppError(
+      "Category not found",
+      404
+    );
   }
 
-  const product = await prisma.product
-    .update({
-      where: { id: req.params.id },
-      data: { ...data, ...discountPriceUpdate, ...(data.slug ? { slug: slugify(data.slug) } : {}) },
-    })
-    .catch(() => null);
-  if (!product) throw new AppError("Product not found", 404);
-  res.json({ product });
+  const slug = data.slug
+    ? slugify(data.slug)
+    : slugify(data.name);
+
+  /*
+   * Duplicate slug
+   */
+
+  const existing =
+    await prisma.product.findUnique({
+      where: {
+        slug,
+      },
+    });
+
+  if (existing) {
+    throw new AppError(
+      "এই slug ইতিমধ্যে ব্যবহার করা হয়েছে",
+      409
+    );
+  }
+
+  const discountPrice =
+    computeDiscountPrice(
+      data.price,
+      data.discountPercent
+    );
+
+  const product =
+    await prisma.product.create({
+      data: {
+        ...data,
+        slug,
+        discountPrice,
+      },
+
+      include: {
+        category: {
+          include: {
+            parent: true,
+          },
+        },
+      },
+    });
+
+  res.status(201).json({
+    product,
+  });
 }
 
-// Soft delete: keeps historical OrderItem rows intact and simply hides
-// the product from the storefront.
-export async function adminDeleteProduct(req: Request, res: Response) {
-  const product = await prisma.product
-    .update({ where: { id: req.params.id }, data: { isActive: false } })
-    .catch(() => null);
-  if (!product) throw new AppError("Product not found", 404);
-  res.json({ message: "Product deactivated" });
+/*
+|--------------------------------------------------------------------------
+| Update Product
+|--------------------------------------------------------------------------
+*/
+
+export async function adminUpdateProduct(
+  req: Request,
+  res: Response
+) {
+  const data =
+    productInputSchema
+      .partial()
+      .parse(req.body);
+
+  const productId =
+    req.params.id;
+
+  const existing =
+    await prisma.product.findUnique({
+      where: {
+        id: productId,
+      },
+    });
+
+  if (!existing) {
+    throw new AppError(
+      "Product not found",
+      404
+    );
+  }
+
+  /*
+   * Verify category if changed
+   */
+
+  if (data.categoryId) {
+    const category =
+      await prisma.category.findUnique({
+        where: {
+          id: data.categoryId,
+        },
+      });
+
+    if (!category) {
+      throw new AppError(
+        "Category not found",
+        404
+      );
+    }
+  }
+
+  /*
+   * Slug
+   */
+
+  let slug: string | undefined;
+
+  if (data.slug) {
+    slug = slugify(data.slug);
+
+    const duplicate =
+      await prisma.product.findFirst({
+        where: {
+          slug,
+          NOT: {
+            id: productId,
+          },
+        },
+      });
+
+    if (duplicate) {
+      throw new AppError(
+        "এই slug ইতিমধ্যে ব্যবহার করা হয়েছে",
+        409
+      );
+    }
+  }
+
+  /*
+   * Discount
+   */
+
+  let discountPriceUpdate: {
+    discountPrice: number | null;
+  } | undefined;
+
+  if (
+    data.price !== undefined ||
+    data.discountPercent !== undefined
+  ) {
+    const price =
+      data.price ??
+      existing.price;
+
+    const discountPercent =
+      data.discountPercent !== undefined
+        ? data.discountPercent
+        : existing.discountPercent;
+
+    discountPriceUpdate = {
+      discountPrice:
+        computeDiscountPrice(
+          price,
+          discountPercent
+        ),
+    };
+  }
+
+  const product =
+    await prisma.product.update({
+      where: {
+        id: productId,
+      },
+
+      data: {
+        ...data,
+
+        ...(slug !== undefined && {
+          slug,
+        }),
+
+        ...(discountPriceUpdate ?? {}),
+      },
+
+      include: {
+        category: {
+          include: {
+            parent: true,
+          },
+        },
+      },
+    });
+
+  res.json({
+    product,
+  });
+}
+
+/*
+|--------------------------------------------------------------------------
+| Soft Delete / Deactivate
+|--------------------------------------------------------------------------
+*/
+
+export async function adminDeleteProduct(
+  req: Request,
+  res: Response
+) {
+  const product =
+    await prisma.product
+      .update({
+        where: {
+          id: req.params.id,
+        },
+
+        data: {
+          isActive: false,
+        },
+      })
+      .catch(() => null);
+
+  if (!product) {
+    throw new AppError(
+      "Product not found",
+      404
+    );
+  }
+
+  res.json({
+    message:
+      "Product deactivated",
+    product,
+  });
 }

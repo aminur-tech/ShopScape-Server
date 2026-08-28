@@ -58,8 +58,19 @@ model Category {
   slug      String    @unique
   image     String?
   isActive  Boolean   @default(true)
+
+  // Parent category
+  parentId  String?
+  parent    Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+
+  // Subcategories
+  children  Category[] @relation("CategoryHierarchy")
+
   products  Product[]
-  createdAt DateTime  @default(now())
+
+  createdAt DateTime @default(now())
+
+  @@index([parentId])
 }
 
 model Product {
