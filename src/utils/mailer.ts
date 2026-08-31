@@ -1,56 +1,31 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
+
 import { env } from "../config/env";
 
 /*
 |--------------------------------------------------------------------------
-| SMTP Configuration
+| RESEND CLIENT
 |--------------------------------------------------------------------------
 */
 
-const missingConfig: string[] = [];
-
-if (!env.SMTP_HOST) missingConfig.push("SMTP_HOST");
-if (!env.SMTP_USER) missingConfig.push("SMTP_USER");
-if (!env.SMTP_PASS) missingConfig.push("SMTP_PASS");
-if (!env.SMTP_FROM) missingConfig.push("SMTP_FROM");
-
-if (missingConfig.length > 0) {
-  console.error(
-    `[mailer] Missing SMTP configuration: ${missingConfig.join(", ")}`
-  );
-}
+const resend = new Resend(
+  env.RESEND_API_KEY
+);
 
 /*
 |--------------------------------------------------------------------------
-| Transporter
-|--------------------------------------------------------------------------
-*/
-
-const transporter =
-  missingConfig.length === 0
-    ? nodemailer.createTransport({
-        host: env.SMTP_HOST,
-        port: env.SMTP_PORT,
-        secure: env.SMTP_PORT === 465,
-        auth: {
-          user: env.SMTP_USER,
-          pass: env.SMTP_PASS,
-        },
-      })
-    : null;
-
-/*
-|--------------------------------------------------------------------------
-| Email Constants
+| EMAIL CONSTANTS
 |--------------------------------------------------------------------------
 */
 
 const SHOP_NAME = "ShopScape";
-const FRONTEND_URL = env.FRONTEND_URL.replace(/\/$/, "");
+
+const FRONTEND_URL =
+  env.FRONTEND_URL.replace(/\/$/, "");
 
 /*
 |--------------------------------------------------------------------------
-| Send Mail
+| SEND MAIL
 |--------------------------------------------------------------------------
 */
 
@@ -59,23 +34,50 @@ async function sendMail(
   subject: string,
   html: string
 ) {
-  if (!transporter) {
-    throw new Error(
-      "SMTP configuration is incomplete. Please check SMTP_HOST, SMTP_USER, SMTP_PASS and SMTP_FROM."
-    );
-  }
+  try {
+    const result =
+      await resend.emails.send({
+        from: env.EMAIL_FROM,
+        to,
+        subject,
+        html,
+      });
 
-  return transporter.sendMail({
-    from: env.SMTP_FROM,
-    to,
-    subject,
-    html,
-  });
+    if (result.error) {
+      console.error(
+        "[mailer] Resend error:",
+        result.error
+      );
+
+      throw new Error(
+        result.error.message ??
+          "Failed to send email"
+      );
+    }
+
+    console.log(
+      "[mailer] Email sent successfully:",
+      {
+        to,
+        subject,
+        id: result.data?.id,
+      }
+    );
+
+    return result;
+  } catch (error) {
+    console.error(
+      "[mailer] Failed to send email:",
+      error
+    );
+
+    throw error;
+  }
 }
 
 /*
 |--------------------------------------------------------------------------
-| Base Email Layout
+| BASE EMAIL LAYOUT
 |--------------------------------------------------------------------------
 */
 
@@ -86,8 +88,11 @@ function emailLayout(
   return `
 <!DOCTYPE html>
 <html lang="bn">
+
 <head>
+
   <meta charset="UTF-8" />
+
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0"
@@ -96,6 +101,7 @@ function emailLayout(
   <title>${SHOP_NAME}</title>
 
   <style>
+
     body {
       margin: 0;
       padding: 0;
@@ -116,6 +122,7 @@ function emailLayout(
     }
 
     @media only screen and (max-width: 600px) {
+
       .container {
         width: 100% !important;
       }
@@ -132,8 +139,11 @@ function emailLayout(
         font-size: 30px !important;
         letter-spacing: 8px !important;
       }
+
     }
+
   </style>
+
 </head>
 
 <body>
@@ -163,7 +173,9 @@ function emailLayout(
     border="0"
     style="background:#f4f6f8;"
   >
+
     <tr>
+
       <td
         align="center"
         style="padding:35px 15px;"
@@ -185,9 +197,10 @@ function emailLayout(
           "
         >
 
-          <!-- Header -->
+          <!-- HEADER -->
 
           <tr>
+
             <td
               class="header"
               align="center"
@@ -219,11 +232,13 @@ function emailLayout(
               </div>
 
             </td>
+
           </tr>
 
-          <!-- Content -->
+          <!-- CONTENT -->
 
           <tr>
+
             <td
               class="content"
               style="
@@ -234,11 +249,13 @@ function emailLayout(
               ${content}
 
             </td>
+
           </tr>
 
-          <!-- Footer -->
+          <!-- FOOTER -->
 
           <tr>
+
             <td
               style="
                 background:#f9fafb;
@@ -256,7 +273,8 @@ function emailLayout(
                   line-height:1.6;
                 "
               >
-                © ${new Date().getFullYear()} ${SHOP_NAME}.
+                © ${new Date().getFullYear()}
+                ${SHOP_NAME}.
                 All rights reserved.
               </p>
 
@@ -271,22 +289,26 @@ function emailLayout(
               </p>
 
             </td>
+
           </tr>
 
         </table>
 
       </td>
+
     </tr>
+
   </table>
 
 </body>
+
 </html>
 `;
 }
 
 /*
 |--------------------------------------------------------------------------
-| Verification Code Email
+| VERIFICATION CODE EMAIL
 |--------------------------------------------------------------------------
 */
 
@@ -294,8 +316,9 @@ export async function sendVerificationCodeEmail(
   email: string,
   code: string
 ) {
-  const html = emailLayout(
-    `
+  const html =
+    emailLayout(
+      `
       <div style="text-align:center;">
 
         <div
@@ -396,9 +419,9 @@ export async function sendVerificationCodeEmail(
         </p>
 
       </div>
-    `,
-    `আপনার ShopScape verification code হলো ${code}`
-  );
+      `,
+      `আপনার ShopScape verification code হলো ${code}`
+    );
 
   return sendMail(
     email,
@@ -409,11 +432,14 @@ export async function sendVerificationCodeEmail(
 
 /*
 |--------------------------------------------------------------------------
-| Order Status Labels
+| ORDER STATUS LABELS
 |--------------------------------------------------------------------------
 */
 
-const STATUS_LABELS_BN: Record<string, string> = {
+const STATUS_LABELS_BN: Record<
+  string,
+  string
+> = {
   PENDING: "অপেক্ষমান",
   CONFIRMED: "নিশ্চিত হয়েছে",
   PROCESSING: "প্রসেসিং চলছে",
@@ -424,7 +450,7 @@ const STATUS_LABELS_BN: Record<string, string> = {
 
 /*
 |--------------------------------------------------------------------------
-| Order Status Email
+| ORDER STATUS EMAIL
 |--------------------------------------------------------------------------
 */
 
@@ -434,15 +460,17 @@ export async function sendOrderStatusEmail(
   status: string
 ) {
   const label =
-    STATUS_LABELS_BN[status] ?? status;
+    STATUS_LABELS_BN[status] ??
+    status;
 
   const trackUrl =
     `${FRONTEND_URL}/track-order?order=${encodeURIComponent(
       orderNumber
     )}`;
 
-  const html = emailLayout(
-    `
+  const html =
+    emailLayout(
+      `
       <div>
 
         <h1
@@ -477,8 +505,6 @@ export async function sendOrderStatusEmail(
           আপনার ShopScape অর্ডারের সর্বশেষ
           স্ট্যাটাস আপডেট করা হয়েছে।
         </p>
-
-        <!-- Order Information -->
 
         <div
           style="
@@ -544,8 +570,6 @@ export async function sendOrderStatusEmail(
           বর্তমান অবস্থা দেখতে নিচের বাটনে ক্লিক করুন।
         </p>
 
-        <!-- CTA -->
-
         <div
           style="
             text-align:center;
@@ -595,9 +619,9 @@ export async function sendOrderStatusEmail(
         </p>
 
       </div>
-    `,
-    `আপনার অর্ডার ${orderNumber} এর স্ট্যাটাস: ${label}`
-  );
+      `,
+      `আপনার অর্ডার ${orderNumber} এর স্ট্যাটাস: ${label}`
+    );
 
   return sendMail(
     email,
@@ -608,23 +632,33 @@ export async function sendOrderStatusEmail(
 
 /*
 |--------------------------------------------------------------------------
-| Optional: SMTP Connection Test
+| RESEND CONFIG TEST
+|--------------------------------------------------------------------------
+|
+| Nodemailer-এর transporter.verify() আর দরকার নেই।
+| Resend API key আছে কিনা সেটা check করা হচ্ছে।
 |--------------------------------------------------------------------------
 */
 
 export async function verifyMailerConnection() {
-  if (!transporter) {
+  if (!env.RESEND_API_KEY) {
     throw new Error(
-      "SMTP transporter is not configured."
+      "RESEND_API_KEY is not configured."
     );
   }
 
-  await transporter.verify();
-
   console.log(
-    "[mailer] SMTP connection verified successfully."
+    "[mailer] Resend configuration verified successfully."
   );
+
+  return true;
 }
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN ORDER MESSAGE EMAIL
+|--------------------------------------------------------------------------
+*/
 
 export async function sendAdminOrderMessageEmail({
   email,
@@ -637,19 +671,27 @@ export async function sendAdminOrderMessageEmail({
   subject: string;
   message: string;
 }) {
-  const safeMessage = message
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\n/g, "<br />");
+  const safeMessage =
+    message
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\n/g, "<br />");
+
+  const safeSubject =
+    subject
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
 
   const trackUrl =
     `${FRONTEND_URL}/track-order?order=${encodeURIComponent(
       orderNumber
     )}`;
 
-  const html = emailLayout(
-    `
+  const html =
+    emailLayout(
+      `
       <div>
 
         <h1
@@ -659,7 +701,7 @@ export async function sendAdminOrderMessageEmail({
             font-size:24px;
           "
         >
-          ${subject}
+          ${safeSubject}
         </h1>
 
         <p
@@ -696,6 +738,7 @@ export async function sendAdminOrderMessageEmail({
             border-radius:10px;
           "
         >
+
           <div
             style="
               color:#6b7280;
@@ -715,6 +758,7 @@ export async function sendAdminOrderMessageEmail({
           >
             ${orderNumber}
           </div>
+
         </div>
 
         <div
@@ -723,6 +767,7 @@ export async function sendAdminOrderMessageEmail({
             margin:28px 0;
           "
         >
+
           <a
             href="${trackUrl}"
             style="
@@ -737,6 +782,7 @@ export async function sendAdminOrderMessageEmail({
           >
             অর্ডার ট্র্যাক করুন
           </a>
+
         </div>
 
         <p
@@ -752,9 +798,9 @@ export async function sendAdminOrderMessageEmail({
         </p>
 
       </div>
-    `,
-    `ShopScape থেকে আপনার অর্ডার ${orderNumber} সম্পর্কে নতুন বার্তা`
-  );
+      `,
+      `ShopScape থেকে আপনার অর্ডার ${orderNumber} সম্পর্কে নতুন বার্তা`
+    );
 
   return sendMail(
     email,
