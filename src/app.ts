@@ -8,7 +8,6 @@ import helmet from "helmet";
 import morgan from "morgan";
 
 import { env } from "./config/env";
-
 import routes from "./routes";
 
 import {
@@ -19,22 +18,14 @@ import {
 export const app = express();
 
 /* -------------------------------------------------------------------------- */
-/* Railway / Reverse Proxy                                                    */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Railway runs Express behind a reverse proxy.
- *
- * This allows Express and express-rate-limit to correctly
- * determine the real client IP from X-Forwarded-For.
- */
-app.set("trust proxy", 1);
-
-/* -------------------------------------------------------------------------- */
 /* Security                                                                   */
 /* -------------------------------------------------------------------------- */
 
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+  })
+);
 
 /* -------------------------------------------------------------------------- */
 /* CORS                                                                       */
@@ -44,7 +35,7 @@ app.use(
   cors({
     origin: env.FRONTEND_URL,
     credentials: true,
-  }),
+  })
 );
 
 /* -------------------------------------------------------------------------- */
@@ -53,8 +44,15 @@ app.use(
 
 app.use(
   express.json({
-    limit: "1mb",
-  }),
+    limit: "2mb",
+  })
+);
+
+app.use(
+  express.urlencoded({
+    extended: true,
+    limit: "2mb",
+  })
 );
 
 /* -------------------------------------------------------------------------- */
@@ -65,39 +63,41 @@ app.use(
   morgan(
     env.isProd
       ? "combined"
-      : "dev",
-  ),
+      : "dev"
+  )
 );
 
 /* -------------------------------------------------------------------------- */
-/* API Routes                                                                 */
-/* -------------------------------------------------------------------------- */
-
-app.use("/api", routes);
-
-/* -------------------------------------------------------------------------- */
-/* API Root                                                                   */
+/* API Root                                                                    */
 /* -------------------------------------------------------------------------- */
 
 app.get(
   "/",
   (_req: Request, res: Response) => {
-    res.json({
+    res.status(200).json({
       status: "ok",
-      message:
-        "ShopScape API is running 🚀",
+      message: "ShopScape API is running 🚀",
+      environment: env.isProd
+        ? "production"
+        : "development",
     });
-  },
+  }
 );
 
 /* -------------------------------------------------------------------------- */
-/* 404                                                                        */
+/* API Routes                                                                  */
+/* -------------------------------------------------------------------------- */
+
+app.use("/api", routes);
+
+/* -------------------------------------------------------------------------- */
+/* 404                                                                         */
 /* -------------------------------------------------------------------------- */
 
 app.use(notFoundHandler);
 
 /* -------------------------------------------------------------------------- */
-/* Error Handler                                                              */
+/* Error Handler                                                               */
 /* -------------------------------------------------------------------------- */
 
 app.use(errorHandler);
