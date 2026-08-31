@@ -1,120 +1,103 @@
-import express, { type Request, type Response } from "express";
+import express, {
+  type Request,
+  type Response,
+} from "express";
+
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 
 import { env } from "./config/env";
+
 import routes from "./routes";
-import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
+
+import {
+  errorHandler,
+  notFoundHandler,
+} from "./middleware/errorHandler";
 
 export const app = express();
 
+/* -------------------------------------------------------------------------- */
+/* Railway / Reverse Proxy                                                    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Railway runs Express behind a reverse proxy.
+ *
+ * This allows Express and express-rate-limit to correctly
+ * determine the real client IP from X-Forwarded-For.
+ */
+app.set("trust proxy", 1);
+
+/* -------------------------------------------------------------------------- */
+/* Security                                                                   */
+/* -------------------------------------------------------------------------- */
+
 app.use(helmet());
+
+/* -------------------------------------------------------------------------- */
+/* CORS                                                                       */
+/* -------------------------------------------------------------------------- */
 
 app.use(
   cors({
     origin: env.FRONTEND_URL,
     credentials: true,
-  })
+  }),
 );
 
-app.use(express.json());
+/* -------------------------------------------------------------------------- */
+/* Body Parser                                                                */
+/* -------------------------------------------------------------------------- */
 
-app.use(morgan(env.isProd ? "combined" : "dev"));
+app.use(
+  express.json({
+    limit: "1mb",
+  }),
+);
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-*/
+/* -------------------------------------------------------------------------- */
+/* Logger                                                                     */
+/* -------------------------------------------------------------------------- */
+
+app.use(
+  morgan(
+    env.isProd
+      ? "combined"
+      : "dev",
+  ),
+);
+
+/* -------------------------------------------------------------------------- */
+/* API Routes                                                                 */
+/* -------------------------------------------------------------------------- */
 
 app.use("/api", routes);
 
-/*
-|--------------------------------------------------------------------------
-| Get All Registered Routes
-|--------------------------------------------------------------------------
-*/
+/* -------------------------------------------------------------------------- */
+/* API Root                                                                   */
+/* -------------------------------------------------------------------------- */
 
-function getRoutes(
-  router: express.Router,
-  prefix = ""
-): {
-  method: string;
-  path: string;
-}[] {
-  const routesList: {
-    method: string;
-    path: string;
-  }[] = [];
+app.get(
+  "/",
+  (_req: Request, res: Response) => {
+    res.json({
+      status: "ok",
+      message:
+        "ShopScape API is running 🚀",
+    });
+  },
+);
 
-  const stack = (router as any).stack || [];
-
-  for (const layer of stack) {
-    // Normal route
-    if (layer.route) {
-      const path = prefix + layer.route.path;
-
-      for (const method of Object.keys(layer.route.methods)) {
-        routesList.push({
-          method: method.toUpperCase(),
-          path,
-        });
-      }
-    }
-
-    // Nested router
-    else if (layer.name === "router" && layer.handle) {
-      let nestedPrefix = prefix;
-
-      if (layer.regexp) {
-        const regexp = layer.regexp.toString();
-
-        const match = regexp.match(
-          /^\/\^\\\/\(\?:\\\/\(\[\^\\\/\]\+\?\)\)\?/
-        );
-
-        if (match) {
-          nestedPrefix += "/:param";
-        }
-      }
-
-      routesList.push(...getRoutes(layer.handle, nestedPrefix));
-    }
-  }
-
-  return routesList;
-}
-
-/*
-|--------------------------------------------------------------------------
-| API Root - Show All Endpoints
-|--------------------------------------------------------------------------
-*/
-
-app.get("/", (_req: Request, res: Response) => {
-  const endpoints = getRoutes(routes);
-
-  res.json({
-    status: "ok",
-    message: "ShopScape API is running 🚀",
-    totalEndpoints: endpoints.length,
-    endpoints,
-  });
-});
-
-/*
-|--------------------------------------------------------------------------
-| 404
-|--------------------------------------------------------------------------
-*/
+/* -------------------------------------------------------------------------- */
+/* 404                                                                        */
+/* -------------------------------------------------------------------------- */
 
 app.use(notFoundHandler);
 
-/*
-|--------------------------------------------------------------------------
-| Error Handler
-|--------------------------------------------------------------------------
-*/
+/* -------------------------------------------------------------------------- */
+/* Error Handler                                                              */
+/* -------------------------------------------------------------------------- */
 
 app.use(errorHandler);
