@@ -2,11 +2,6 @@ import { Resend } from "resend";
 
 import { env } from "../config/env";
 
-/*
-|--------------------------------------------------------------------------
-| RESEND CLIENT
-|--------------------------------------------------------------------------
-*/
 
 const resend = new Resend(
   env.RESEND_API_KEY
