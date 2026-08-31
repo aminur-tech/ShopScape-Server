@@ -1,6 +1,6 @@
 import PDFDocument from "pdfkit";
 import type { Response } from "express";
-import type { Order, OrderItem } from "@prisma/client";
+import type { Order, OrderItem } from "../generated/prisma/client"
 import fs from "fs";
 import path from "path";
 

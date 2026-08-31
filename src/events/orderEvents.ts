@@ -1,7 +1,7 @@
 import { EventEmitter } from "events";
 import { prisma } from "../config/prisma";
 import { sendOrderStatusEmail } from "../utils/mailer";
-import type { Order, OrderStatus } from "@prisma/client";
+import type { Order, OrderStatus } from "../generated/prisma/client"
 
 
 export const orderEvents = new EventEmitter();
