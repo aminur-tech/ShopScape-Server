@@ -10,52 +10,108 @@ export async function listCategories(
   _req: Request,
   res: Response
 ) {
-  const categories = await prisma.category.findMany({
-    where: {
-      isActive: true,
-      parentId: null,
-    },
+  const categories =
+    await prisma.category.findMany({
+      where: {
+        isActive: true,
+        parentId: null,
+      },
 
-    orderBy: {
-      name: "asc",
-    },
+      orderBy: {
+        name: "asc",
+      },
 
-    include: {
-      _count: {
-        select: {
-          products: {
-            where: {
-              isActive: true,
+      include: {
+        /* ------------------------------------------------------------------ */
+        /* Main Category Own Products                                         */
+        /* ------------------------------------------------------------------ */
+
+        _count: {
+          select: {
+            products: {
+              where: {
+                isActive: true,
+              },
             },
           },
         },
-      },
 
-      children: {
-        where: {
-          isActive: true,
-        },
+        /* ------------------------------------------------------------------ */
+        /* Sub Categories                                                     */
+        /* ------------------------------------------------------------------ */
 
-        orderBy: {
-          name: "asc",
-        },
+        children: {
+          where: {
+            isActive: true,
+          },
 
-        include: {
-          _count: {
-            select: {
-              products: {
-                where: {
-                  isActive: true,
+          orderBy: {
+            name: "asc",
+          },
+
+          include: {
+            _count: {
+              select: {
+                products: {
+                  where: {
+                    isActive: true,
+                  },
                 },
               },
             },
           },
         },
       },
-    },
-  });
+    });
 
-  res.json({
-    categories,
+  /* ------------------------------------------------------------------------ */
+  /* Calculate Total Count                                                    */
+  /* ------------------------------------------------------------------------ */
+
+  const formattedCategories =
+    categories.map((category) => {
+      /* -------------------------------------------------------------- */
+      /* Main category own products                                    */
+      /* -------------------------------------------------------------- */
+
+      const ownProductCount =
+        category._count.products;
+
+      /* -------------------------------------------------------------- */
+      /* All subcategory products                                      */
+      /* -------------------------------------------------------------- */
+
+      const subCategoryProductCount =
+        category.children.reduce(
+          (total, child) =>
+            total +
+            child._count.products,
+          0
+        );
+
+      /* -------------------------------------------------------------- */
+      /* Main total = own + children                                   */
+      /* -------------------------------------------------------------- */
+
+      const totalProductCount =
+        ownProductCount +
+        subCategoryProductCount;
+
+      return {
+        ...category,
+
+        _count: {
+          products: totalProductCount,
+        },
+      };
+    });
+
+  /* ------------------------------------------------------------------------ */
+  /* Response                                                                 */
+  /* ------------------------------------------------------------------------ */
+
+  return res.json({
+    categories:
+      formattedCategories,
   });
 }
