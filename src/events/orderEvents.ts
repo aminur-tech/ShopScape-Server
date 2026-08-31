@@ -3,11 +3,7 @@ import { prisma } from "../config/prisma";
 import { sendOrderStatusEmail } from "../utils/mailer";
 import type { Order, OrderStatus } from "@prisma/client";
 
-// Internal event bus used to decouple "an order's status changed" from
-// "notify the customer". Today this sends an email + writes a
-// NotificationLog row. Later, a real outbound webhook (e.g. to SMS
-// provider or a customer-facing webhook subscription) can listen on the
-// same event without touching the code that changes order status.
+
 export const orderEvents = new EventEmitter();
 
 export const ORDER_STATUS_CHANGED = "order.status.changed";
