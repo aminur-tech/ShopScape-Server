@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 
 import { prisma } from "../config/prisma";
 import { AppError } from "../middleware/errorHandler";
@@ -791,7 +792,7 @@ export async function placeOrder(
   ) {
     const foundIds =
       products.map(
-        (product) =>
+        (product: (typeof products)[number]) =>
           product.id
       );
 
@@ -829,7 +830,7 @@ export async function placeOrder(
       (item) => {
         const product =
           products.find(
-            (product) =>
+            (product: (typeof products)[number]) =>
               product.id ===
               item.productId
           );
@@ -993,7 +994,7 @@ export async function placeOrder(
   try {
     order =
       await prisma.$transaction(
-        async (tx) => {
+        async (tx: Prisma.TransactionClient) => {
           const orderNumber =
             generateOrderNumber();
 

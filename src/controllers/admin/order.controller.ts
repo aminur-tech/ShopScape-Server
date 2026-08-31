@@ -164,7 +164,7 @@ export async function adminGetOrder(req: Request, res: Response) {
   });
 
   const hasPreviousReturns = previousOrders.some(
-    (item) =>
+    (item: (typeof previousOrders)[number]) =>
       item.returnRequired === true ||
       item.status === "CANCELLED"
   );

@@ -161,7 +161,9 @@ export async function listProducts(
 
       const selectedSubcategory =
         mainCategory.children.find(
-          (child) =>
+          (
+            child: (typeof mainCategory.children)[number]
+          ) =>
             child.slug === subcategory
         );
 
@@ -202,7 +204,8 @@ export async function listProducts(
         mainCategory.id,
 
         ...mainCategory.children.map(
-          (child) => child.id
+          (child: (typeof mainCategory.children)[number]) =>
+            child.id
         ),
       ];
 

@@ -69,7 +69,7 @@ export async function listCategories(
   /* ------------------------------------------------------------------------ */
 
   const formattedCategories =
-    categories.map((category) => {
+    categories.map((category: (typeof categories)[number]) => {
       /* -------------------------------------------------------------- */
       /* Main category own products                                    */
       /* -------------------------------------------------------------- */
@@ -83,7 +83,10 @@ export async function listCategories(
 
       const subCategoryProductCount =
         category.children.reduce(
-          (total, child) =>
+          (
+            total: number,
+            child: (typeof category.children)[number]
+          ) =>
             total +
             child._count.products,
           0

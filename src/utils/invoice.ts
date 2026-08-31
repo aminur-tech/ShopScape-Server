@@ -617,7 +617,7 @@ export async function streamInvoicePdf(
   const itemImages =
     await Promise.all(
       order.items.map(
-        async (item) => {
+        async (item: (typeof order.items)[number]) => {
           console.log(
             `[invoice] Product: ${item.name}`
           );

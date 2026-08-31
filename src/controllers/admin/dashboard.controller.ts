@@ -336,7 +336,7 @@ export async function adminDashboard(
 
     ordersByStatus:
       ordersByStatus.map(
-        (item) => ({
+        (item: (typeof ordersByStatus)[number]) => ({
           status: item.status,
 
           count:
