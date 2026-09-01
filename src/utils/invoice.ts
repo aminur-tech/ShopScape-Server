@@ -82,15 +82,15 @@ export async function streamInvoicePdf(res: Response, order: InvoiceOrder) {
   doc.pipe(res);
 
   /* =======================================================
-     COLOR PALETTE (SOFT & BALANCED)
+     COLOR PALETTE (ORANGE THEME MATCHING IMAGE)
   ======================================================= */
-  const BG = "#F8FAFC";           // Subtle Background
+  const BG = "#F8FAFC";           // Light Slate BG
   const WHITE = "#FFFFFF";        // Container Card
-  const TEXT_MAIN = "#334155";    // Slate 700 (Slightly softer than Slate 900)
+  const TEXT_MAIN = "#1E293B";    // Slate 800
   const TEXT_MUTED = "#64748B";   // Slate 500
-  const PRIMARY = "#6366F1";      // Indigo 500 (Softened primary accent)
-  const PRIMARY_LIGHT = "#EEF2FF"; // Soft Indigo 50
-  const ACCENT = "#10B981";       // Emerald 500
+  const PRIMARY = "#FF5500";      // Orange (Matched to Image Logo)
+  const PRIMARY_LIGHT = "#FFF0E6"; // Soft Orange Background
+  const ACCENT = "#E11D48";       // Pinkish Red Accent for Price / COD
   const BORDER = "#E2E8F0";       // Soft Border
   const TABLE_TH = "#F8FAFC";     // Light Table Header
   const IMAGE_BG = "#F1F5F9";
@@ -163,21 +163,21 @@ export async function streamInvoicePdf(res: Response, order: InvoiceOrder) {
   /* =======================================================
      HEADER SECTION (LOGO & BRAND)
   ====================================================== */
-  const logoSize = 36;
+  const logoSize = 38;
   const logoX = cardX + cardWidth / 2 - logoSize / 2;
   const logoY = cardY + 24;
 
-  // Soft Logo Box
-  doc.roundedRect(logoX, logoY, logoSize, logoSize, 10).fill(PRIMARY_LIGHT);
-  setFont(18, true);
-  doc.fillColor(PRIMARY).text("S", logoX, logoY + 6, {
+  // Orange Logo Box
+  doc.roundedRect(logoX, logoY, logoSize, logoSize, 10).fill(PRIMARY);
+  setFont(20, true);
+  doc.fillColor(WHITE).text("S", logoX, logoY + 7, {
     width: logoSize,
     align: "center",
   });
 
   // Brand Name & Subtitle
-  setFont(14, true);
-  doc.fillColor(TEXT_MAIN).text("ShopScape", cardX, logoY + 42, {
+  setFont(15, true);
+  doc.fillColor(TEXT_MAIN).text("ShopScape", cardX, logoY + 44, {
     width: cardWidth,
     align: "center",
   });
@@ -185,7 +185,7 @@ export async function streamInvoicePdf(res: Response, order: InvoiceOrder) {
   setFont(8.5);
   doc
     .fillColor(TEXT_MUTED)
-    .text("Mohammadpur, Dhaka, Bangladesh", cardX, logoY + 62, {
+    .text("Mohammadpur, Dhaka, Bangladesh", cardX, logoY + 64, {
       width: cardWidth,
       align: "center",
     });
@@ -355,7 +355,7 @@ export async function streamInvoicePdf(res: Response, order: InvoiceOrder) {
 
     setFont(9, true);
     doc
-      .fillColor(TEXT_MAIN)
+      .fillColor(ACCENT)
       .text(money(totalItemPrice), priceX, rowY + (rowHeight - 6) / 2 - 6, {
         width: colPriceW - 20,
         align: "right",
