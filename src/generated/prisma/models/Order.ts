@@ -55,6 +55,8 @@ export type OrderMinAggregateOutputType = {
   deliveryPaymentStatus: string | null
   deliveryTransactionId: string | null
   deliveryPaymentProofUrl: string | null
+  adminMessage: string | null
+  adminMessageSubject: string | null
   fullName: string | null
   phone: string | null
   division: string | null
@@ -85,6 +87,8 @@ export type OrderMaxAggregateOutputType = {
   deliveryPaymentStatus: string | null
   deliveryTransactionId: string | null
   deliveryPaymentProofUrl: string | null
+  adminMessage: string | null
+  adminMessageSubject: string | null
   fullName: string | null
   phone: string | null
   division: string | null
@@ -115,6 +119,8 @@ export type OrderCountAggregateOutputType = {
   deliveryPaymentStatus: number
   deliveryTransactionId: number
   deliveryPaymentProofUrl: number
+  adminMessage: number
+  adminMessageSubject: number
   fullName: number
   phone: number
   division: number
@@ -159,6 +165,8 @@ export type OrderMinAggregateInputType = {
   deliveryPaymentStatus?: true
   deliveryTransactionId?: true
   deliveryPaymentProofUrl?: true
+  adminMessage?: true
+  adminMessageSubject?: true
   fullName?: true
   phone?: true
   division?: true
@@ -189,6 +197,8 @@ export type OrderMaxAggregateInputType = {
   deliveryPaymentStatus?: true
   deliveryTransactionId?: true
   deliveryPaymentProofUrl?: true
+  adminMessage?: true
+  adminMessageSubject?: true
   fullName?: true
   phone?: true
   division?: true
@@ -219,6 +229,8 @@ export type OrderCountAggregateInputType = {
   deliveryPaymentStatus?: true
   deliveryTransactionId?: true
   deliveryPaymentProofUrl?: true
+  adminMessage?: true
+  adminMessageSubject?: true
   fullName?: true
   phone?: true
   division?: true
@@ -336,6 +348,8 @@ export type OrderGroupByOutputType = {
   deliveryPaymentStatus: string | null
   deliveryTransactionId: string | null
   deliveryPaymentProofUrl: string | null
+  adminMessage: string | null
+  adminMessageSubject: string | null
   fullName: string
   phone: string
   division: string
@@ -389,6 +403,8 @@ export type OrderWhereInput = {
   deliveryPaymentStatus?: Prisma.StringNullableFilter<"Order"> | string | null
   deliveryTransactionId?: Prisma.StringNullableFilter<"Order"> | string | null
   deliveryPaymentProofUrl?: Prisma.StringNullableFilter<"Order"> | string | null
+  adminMessage?: Prisma.StringNullableFilter<"Order"> | string | null
+  adminMessageSubject?: Prisma.StringNullableFilter<"Order"> | string | null
   fullName?: Prisma.StringFilter<"Order"> | string
   phone?: Prisma.StringFilter<"Order"> | string
   division?: Prisma.StringFilter<"Order"> | string
@@ -422,6 +438,8 @@ export type OrderOrderByWithRelationInput = {
   deliveryPaymentStatus?: Prisma.SortOrderInput | Prisma.SortOrder
   deliveryTransactionId?: Prisma.SortOrderInput | Prisma.SortOrder
   deliveryPaymentProofUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminMessage?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminMessageSubject?: Prisma.SortOrderInput | Prisma.SortOrder
   fullName?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   division?: Prisma.SortOrder
@@ -458,6 +476,8 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   deliveryPaymentStatus?: Prisma.StringNullableFilter<"Order"> | string | null
   deliveryTransactionId?: Prisma.StringNullableFilter<"Order"> | string | null
   deliveryPaymentProofUrl?: Prisma.StringNullableFilter<"Order"> | string | null
+  adminMessage?: Prisma.StringNullableFilter<"Order"> | string | null
+  adminMessageSubject?: Prisma.StringNullableFilter<"Order"> | string | null
   fullName?: Prisma.StringFilter<"Order"> | string
   phone?: Prisma.StringFilter<"Order"> | string
   division?: Prisma.StringFilter<"Order"> | string
@@ -491,6 +511,8 @@ export type OrderOrderByWithAggregationInput = {
   deliveryPaymentStatus?: Prisma.SortOrderInput | Prisma.SortOrder
   deliveryTransactionId?: Prisma.SortOrderInput | Prisma.SortOrder
   deliveryPaymentProofUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminMessage?: Prisma.SortOrderInput | Prisma.SortOrder
+  adminMessageSubject?: Prisma.SortOrderInput | Prisma.SortOrder
   fullName?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   division?: Prisma.SortOrder
@@ -529,6 +551,8 @@ export type OrderScalarWhereWithAggregatesInput = {
   deliveryPaymentStatus?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   deliveryTransactionId?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   deliveryPaymentProofUrl?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
+  adminMessage?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
+  adminMessageSubject?: Prisma.StringNullableWithAggregatesFilter<"Order"> | string | null
   fullName?: Prisma.StringWithAggregatesFilter<"Order"> | string
   phone?: Prisma.StringWithAggregatesFilter<"Order"> | string
   division?: Prisma.StringWithAggregatesFilter<"Order"> | string
@@ -558,6 +582,8 @@ export type OrderCreateInput = {
   deliveryPaymentStatus?: string | null
   deliveryTransactionId?: string | null
   deliveryPaymentProofUrl?: string | null
+  adminMessage?: string | null
+  adminMessageSubject?: string | null
   fullName: string
   phone: string
   division: string
@@ -591,6 +617,8 @@ export type OrderUncheckedCreateInput = {
   deliveryPaymentStatus?: string | null
   deliveryTransactionId?: string | null
   deliveryPaymentProofUrl?: string | null
+  adminMessage?: string | null
+  adminMessageSubject?: string | null
   fullName: string
   phone: string
   division: string
@@ -622,6 +650,8 @@ export type OrderUpdateInput = {
   deliveryPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deliveryTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deliveryPaymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminMessageSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   division?: Prisma.StringFieldUpdateOperationsInput | string
@@ -655,6 +685,8 @@ export type OrderUncheckedUpdateInput = {
   deliveryPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deliveryTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deliveryPaymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminMessageSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   division?: Prisma.StringFieldUpdateOperationsInput | string
@@ -687,6 +719,8 @@ export type OrderCreateManyInput = {
   deliveryPaymentStatus?: string | null
   deliveryTransactionId?: string | null
   deliveryPaymentProofUrl?: string | null
+  adminMessage?: string | null
+  adminMessageSubject?: string | null
   fullName: string
   phone: string
   division: string
@@ -716,6 +750,8 @@ export type OrderUpdateManyMutationInput = {
   deliveryPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deliveryTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deliveryPaymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminMessageSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   division?: Prisma.StringFieldUpdateOperationsInput | string
@@ -746,6 +782,8 @@ export type OrderUncheckedUpdateManyInput = {
   deliveryPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deliveryTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deliveryPaymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminMessageSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   division?: Prisma.StringFieldUpdateOperationsInput | string
@@ -791,6 +829,8 @@ export type OrderCountOrderByAggregateInput = {
   deliveryPaymentStatus?: Prisma.SortOrder
   deliveryTransactionId?: Prisma.SortOrder
   deliveryPaymentProofUrl?: Prisma.SortOrder
+  adminMessage?: Prisma.SortOrder
+  adminMessageSubject?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   division?: Prisma.SortOrder
@@ -827,6 +867,8 @@ export type OrderMaxOrderByAggregateInput = {
   deliveryPaymentStatus?: Prisma.SortOrder
   deliveryTransactionId?: Prisma.SortOrder
   deliveryPaymentProofUrl?: Prisma.SortOrder
+  adminMessage?: Prisma.SortOrder
+  adminMessageSubject?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   division?: Prisma.SortOrder
@@ -857,6 +899,8 @@ export type OrderMinOrderByAggregateInput = {
   deliveryPaymentStatus?: Prisma.SortOrder
   deliveryTransactionId?: Prisma.SortOrder
   deliveryPaymentProofUrl?: Prisma.SortOrder
+  adminMessage?: Prisma.SortOrder
+  adminMessageSubject?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   division?: Prisma.SortOrder
@@ -966,6 +1010,8 @@ export type OrderCreateWithoutUserInput = {
   deliveryPaymentStatus?: string | null
   deliveryTransactionId?: string | null
   deliveryPaymentProofUrl?: string | null
+  adminMessage?: string | null
+  adminMessageSubject?: string | null
   fullName: string
   phone: string
   division: string
@@ -997,6 +1043,8 @@ export type OrderUncheckedCreateWithoutUserInput = {
   deliveryPaymentStatus?: string | null
   deliveryTransactionId?: string | null
   deliveryPaymentProofUrl?: string | null
+  adminMessage?: string | null
+  adminMessageSubject?: string | null
   fullName: string
   phone: string
   division: string
@@ -1058,6 +1106,8 @@ export type OrderScalarWhereInput = {
   deliveryPaymentStatus?: Prisma.StringNullableFilter<"Order"> | string | null
   deliveryTransactionId?: Prisma.StringNullableFilter<"Order"> | string | null
   deliveryPaymentProofUrl?: Prisma.StringNullableFilter<"Order"> | string | null
+  adminMessage?: Prisma.StringNullableFilter<"Order"> | string | null
+  adminMessageSubject?: Prisma.StringNullableFilter<"Order"> | string | null
   fullName?: Prisma.StringFilter<"Order"> | string
   phone?: Prisma.StringFilter<"Order"> | string
   division?: Prisma.StringFilter<"Order"> | string
@@ -1087,6 +1137,8 @@ export type OrderCreateWithoutItemsInput = {
   deliveryPaymentStatus?: string | null
   deliveryTransactionId?: string | null
   deliveryPaymentProofUrl?: string | null
+  adminMessage?: string | null
+  adminMessageSubject?: string | null
   fullName: string
   phone: string
   division: string
@@ -1119,6 +1171,8 @@ export type OrderUncheckedCreateWithoutItemsInput = {
   deliveryPaymentStatus?: string | null
   deliveryTransactionId?: string | null
   deliveryPaymentProofUrl?: string | null
+  adminMessage?: string | null
+  adminMessageSubject?: string | null
   fullName: string
   phone: string
   division: string
@@ -1165,6 +1219,8 @@ export type OrderUpdateWithoutItemsInput = {
   deliveryPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deliveryTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deliveryPaymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminMessageSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   division?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1197,6 +1253,8 @@ export type OrderUncheckedUpdateWithoutItemsInput = {
   deliveryPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deliveryTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deliveryPaymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminMessageSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   division?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1227,6 +1285,8 @@ export type OrderCreateWithoutNotificationsInput = {
   deliveryPaymentStatus?: string | null
   deliveryTransactionId?: string | null
   deliveryPaymentProofUrl?: string | null
+  adminMessage?: string | null
+  adminMessageSubject?: string | null
   fullName: string
   phone: string
   division: string
@@ -1259,6 +1319,8 @@ export type OrderUncheckedCreateWithoutNotificationsInput = {
   deliveryPaymentStatus?: string | null
   deliveryTransactionId?: string | null
   deliveryPaymentProofUrl?: string | null
+  adminMessage?: string | null
+  adminMessageSubject?: string | null
   fullName: string
   phone: string
   division: string
@@ -1305,6 +1367,8 @@ export type OrderUpdateWithoutNotificationsInput = {
   deliveryPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deliveryTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deliveryPaymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminMessageSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   division?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1337,6 +1401,8 @@ export type OrderUncheckedUpdateWithoutNotificationsInput = {
   deliveryPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deliveryTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deliveryPaymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminMessageSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   division?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1367,6 +1433,8 @@ export type OrderCreateManyUserInput = {
   deliveryPaymentStatus?: string | null
   deliveryTransactionId?: string | null
   deliveryPaymentProofUrl?: string | null
+  adminMessage?: string | null
+  adminMessageSubject?: string | null
   fullName: string
   phone: string
   division: string
@@ -1396,6 +1464,8 @@ export type OrderUpdateWithoutUserInput = {
   deliveryPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deliveryTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deliveryPaymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminMessageSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   division?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1427,6 +1497,8 @@ export type OrderUncheckedUpdateWithoutUserInput = {
   deliveryPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deliveryTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deliveryPaymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminMessageSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   division?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1458,6 +1530,8 @@ export type OrderUncheckedUpdateManyWithoutUserInput = {
   deliveryPaymentStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deliveryTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   deliveryPaymentProofUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminMessageSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   division?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1528,6 +1602,8 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   deliveryPaymentStatus?: boolean
   deliveryTransactionId?: boolean
   deliveryPaymentProofUrl?: boolean
+  adminMessage?: boolean
+  adminMessageSubject?: boolean
   fullName?: boolean
   phone?: boolean
   division?: boolean
@@ -1562,6 +1638,8 @@ export type OrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   deliveryPaymentStatus?: boolean
   deliveryTransactionId?: boolean
   deliveryPaymentProofUrl?: boolean
+  adminMessage?: boolean
+  adminMessageSubject?: boolean
   fullName?: boolean
   phone?: boolean
   division?: boolean
@@ -1593,6 +1671,8 @@ export type OrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   deliveryPaymentStatus?: boolean
   deliveryTransactionId?: boolean
   deliveryPaymentProofUrl?: boolean
+  adminMessage?: boolean
+  adminMessageSubject?: boolean
   fullName?: boolean
   phone?: boolean
   division?: boolean
@@ -1624,6 +1704,8 @@ export type OrderSelectScalar = {
   deliveryPaymentStatus?: boolean
   deliveryTransactionId?: boolean
   deliveryPaymentProofUrl?: boolean
+  adminMessage?: boolean
+  adminMessageSubject?: boolean
   fullName?: boolean
   phone?: boolean
   division?: boolean
@@ -1637,7 +1719,7 @@ export type OrderSelectScalar = {
   updatedAt?: boolean
 }
 
-export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderNumber" | "userId" | "guestEmail" | "status" | "courierName" | "courierTrackingUrl" | "paymentMethod" | "transactionId" | "paymentProofUrl" | "returnRequired" | "deliveryPaymentRequired" | "deliveryPaymentMethod" | "deliveryPaymentStatus" | "deliveryTransactionId" | "deliveryPaymentProofUrl" | "fullName" | "phone" | "division" | "district" | "area" | "addressLine" | "subtotal" | "deliveryFee" | "total" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
+export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderNumber" | "userId" | "guestEmail" | "status" | "courierName" | "courierTrackingUrl" | "paymentMethod" | "transactionId" | "paymentProofUrl" | "returnRequired" | "deliveryPaymentRequired" | "deliveryPaymentMethod" | "deliveryPaymentStatus" | "deliveryTransactionId" | "deliveryPaymentProofUrl" | "adminMessage" | "adminMessageSubject" | "fullName" | "phone" | "division" | "district" | "area" | "addressLine" | "subtotal" | "deliveryFee" | "total" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
 export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.Order$userArgs<ExtArgs>
   items?: boolean | Prisma.Order$itemsArgs<ExtArgs>
@@ -1675,6 +1757,8 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     deliveryPaymentStatus: string | null
     deliveryTransactionId: string | null
     deliveryPaymentProofUrl: string | null
+    adminMessage: string | null
+    adminMessageSubject: string | null
     fullName: string
     phone: string
     division: string
@@ -2128,6 +2212,8 @@ export interface OrderFieldRefs {
   readonly deliveryPaymentStatus: Prisma.FieldRef<"Order", 'String'>
   readonly deliveryTransactionId: Prisma.FieldRef<"Order", 'String'>
   readonly deliveryPaymentProofUrl: Prisma.FieldRef<"Order", 'String'>
+  readonly adminMessage: Prisma.FieldRef<"Order", 'String'>
+  readonly adminMessageSubject: Prisma.FieldRef<"Order", 'String'>
   readonly fullName: Prisma.FieldRef<"Order", 'String'>
   readonly phone: Prisma.FieldRef<"Order", 'String'>
   readonly division: Prisma.FieldRef<"Order", 'String'>

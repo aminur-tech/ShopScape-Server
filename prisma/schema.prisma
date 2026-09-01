@@ -128,7 +128,7 @@ model Order {
   orderNumber String @unique
 
   userId String?
-  user   User?   @relation(fields: [userId], references: [id])
+  user   User? @relation(fields: [userId], references: [id])
 
   guestEmail String?
 
@@ -137,7 +137,7 @@ model Order {
   courierName        String?
   courierTrackingUrl String?
 
-  paymentMethod   String  @default("COD")
+  paymentMethod   String @default("COD")
   transactionId   String?
   paymentProofUrl String?
 
@@ -147,12 +147,13 @@ model Order {
   deliveryPaymentRequired Boolean @default(false)
 
   deliveryPaymentMethod String?
-
   deliveryPaymentStatus String?
-
   deliveryTransactionId String?
-
   deliveryPaymentProofUrl String?
+
+  // Admin customer message
+  adminMessage        String?
+  adminMessageSubject String?
 
   fullName String
   phone    String

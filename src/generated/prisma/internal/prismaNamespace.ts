@@ -1228,6 +1228,8 @@ export const OrderScalarFieldEnum = {
   deliveryPaymentStatus: 'deliveryPaymentStatus',
   deliveryTransactionId: 'deliveryTransactionId',
   deliveryPaymentProofUrl: 'deliveryPaymentProofUrl',
+  adminMessage: 'adminMessage',
+  adminMessageSubject: 'adminMessageSubject',
   fullName: 'fullName',
   phone: 'phone',
   division: 'division',
