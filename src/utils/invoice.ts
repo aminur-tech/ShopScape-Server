@@ -72,9 +72,6 @@ export async function streamInvoicePdf(res: Response, order: InvoiceOrder) {
     },
   });
 
-  /* =======================================================
-     RESPONSE HEADERS (FIXED FOR DIRECT DOWNLOAD)
-  ======================================================= */
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
     "Content-Disposition",
@@ -85,18 +82,18 @@ export async function streamInvoicePdf(res: Response, order: InvoiceOrder) {
   doc.pipe(res);
 
   /* =======================================================
-     COLOR PALETTE (PROFESSIONAL & SOFT)
+     COLOR PALETTE (SOFT & BALANCED)
   ======================================================= */
-  const BG = "#F8FAFC"; // Light Slate BG
-  const WHITE = "#FFFFFF";
-  const TEXT_MAIN = "#0F172A"; // Slate 900
-  const TEXT_MUTED = "#64748B"; // Slate 500
-  const PRIMARY = "#4F46E5"; // Indigo 600
-  const PRIMARY_LIGHT = "#EEF2FF"; // Indigo 50
-  const ACCENT = "#10B981"; // Emerald 500
-  const BORDER = "#E2E8F0"; // Slate 200
-  const TABLE_TH = "#F1F5F9"; // Slate 100
-  const IMAGE_BG = "#F8FAFC";
+  const BG = "#F8FAFC";           // Subtle Background
+  const WHITE = "#FFFFFF";        // Container Card
+  const TEXT_MAIN = "#334155";    // Slate 700 (Slightly softer than Slate 900)
+  const TEXT_MUTED = "#64748B";   // Slate 500
+  const PRIMARY = "#6366F1";      // Indigo 500 (Softened primary accent)
+  const PRIMARY_LIGHT = "#EEF2FF"; // Soft Indigo 50
+  const ACCENT = "#10B981";       // Emerald 500
+  const BORDER = "#E2E8F0";       // Soft Border
+  const TABLE_TH = "#F8FAFC";     // Light Table Header
+  const IMAGE_BG = "#F1F5F9";
 
   const pageWidth = doc.page.width;
   const pageHeight = doc.page.height;
@@ -165,22 +162,22 @@ export async function streamInvoicePdf(res: Response, order: InvoiceOrder) {
 
   /* =======================================================
      HEADER SECTION (LOGO & BRAND)
-  ======================================================= */
-  const logoSize = 38;
+  ====================================================== */
+  const logoSize = 36;
   const logoX = cardX + cardWidth / 2 - logoSize / 2;
   const logoY = cardY + 24;
 
-  // Logo Icon
-  doc.roundedRect(logoX, logoY, logoSize, logoSize, 10).fill(PRIMARY);
-  setFont(20, true);
-  doc.fillColor(WHITE).text("S", logoX, logoY + 7, {
+  // Soft Logo Box
+  doc.roundedRect(logoX, logoY, logoSize, logoSize, 10).fill(PRIMARY_LIGHT);
+  setFont(18, true);
+  doc.fillColor(PRIMARY).text("S", logoX, logoY + 6, {
     width: logoSize,
     align: "center",
   });
 
-  // Shop Info
-  setFont(15, true);
-  doc.fillColor(TEXT_MAIN).text("ShopScape", cardX, logoY + 44, {
+  // Brand Name & Subtitle
+  setFont(14, true);
+  doc.fillColor(TEXT_MAIN).text("ShopScape", cardX, logoY + 42, {
     width: cardWidth,
     align: "center",
   });
@@ -188,35 +185,35 @@ export async function streamInvoicePdf(res: Response, order: InvoiceOrder) {
   setFont(8.5);
   doc
     .fillColor(TEXT_MUTED)
-    .text("Mohammadpur, Dhaka, Bangladesh", cardX, logoY + 64, {
+    .text("Mohammadpur, Dhaka, Bangladesh", cardX, logoY + 62, {
       width: cardWidth,
       align: "center",
     });
 
-  // Badge: INVOICE
-  const badgeWidth = 70;
+  // Soft Badge: INVOICE
+  const badgeWidth = 68;
   const badgeX = cardX + cardWidth / 2 - badgeWidth / 2;
-  const badgeY = logoY + 80;
+  const badgeY = logoY + 78;
 
   doc.roundedRect(badgeX, badgeY, badgeWidth, 18, 9).fill(PRIMARY_LIGHT);
-  setFont(8, true);
+  setFont(7.5, true);
   doc.fillColor(PRIMARY).text("INVOICE", badgeX, badgeY + 4, {
     width: badgeWidth,
     align: "center",
   });
 
-  // Divider Line
+  // Soft Divider Line
   const dividerY = badgeY + 28;
   doc
     .moveTo(cardX + 24, dividerY)
     .lineTo(cardX + cardWidth - 24, dividerY)
     .strokeColor(BORDER)
-    .lineWidth(0.8)
+    .lineWidth(0.6)
     .stroke();
 
   /* =======================================================
      ORDER & CUSTOMER METADATA (2-COLUMN GRID)
-  ======================================================= */
+  ====================================================== */
   const gridY = dividerY + 16;
   const col1X = cardX + 24;
   const col2X = cardX + cardWidth / 2 + 10;
@@ -238,7 +235,6 @@ export async function streamInvoicePdf(res: Response, order: InvoiceOrder) {
       ? "Nagad"
       : "Cash on Delivery";
 
-  // Column 1 Info
   let currentInfoY = gridY;
 
   const renderField = (x: number, y: number, label: string, val: string, valColor = TEXT_MAIN, isBold = false) => {
@@ -266,7 +262,7 @@ export async function streamInvoicePdf(res: Response, order: InvoiceOrder) {
 
   /* =======================================================
      FETCH IMAGES IN PARALLEL
-  ======================================================= */
+  ====================================================== */
   const itemImages = await Promise.all(
     order.items.map((item) =>
       item.selectedImageUrl ? fetchImageBuffer(item.selectedImageUrl) : null
@@ -275,7 +271,7 @@ export async function streamInvoicePdf(res: Response, order: InvoiceOrder) {
 
   /* =======================================================
      ITEMS TABLE
-  ======================================================= */
+  ====================================================== */
   const tableX = cardX + 20;
   const tableY = currentInfoY + 28;
   const tableWidth = cardWidth - 40;
@@ -289,8 +285,8 @@ export async function streamInvoicePdf(res: Response, order: InvoiceOrder) {
     .roundedRect(tableX, tableY, tableWidth, tableHeaderHeight, 6)
     .fillAndStroke(TABLE_TH, BORDER);
 
-  setFont(8.5, true);
-  doc.fillColor(TEXT_MAIN);
+  setFont(8, true);
+  doc.fillColor(TEXT_MUTED);
   doc.text("Image", tableX + 12, tableY + 8);
   doc.text("Product Details", tableX + colImgW + 8, tableY + 8);
   doc.text("Total", tableX + colImgW + colProductW + 8, tableY + 8, {
@@ -302,12 +298,10 @@ export async function streamInvoicePdf(res: Response, order: InvoiceOrder) {
   let rowY = tableY + tableHeaderHeight + 6;
 
   for (const [index, item] of order.items.entries()) {
-    // Row Outline Container
     doc
       .roundedRect(tableX, rowY, tableWidth, rowHeight - 6, 6)
       .fillAndStroke(WHITE, BORDER);
 
-    // 1. Image
     const imgX = tableX + 8;
     const imgY = rowY + 6;
     const imgSize = 54;
@@ -330,11 +324,10 @@ export async function streamInvoicePdf(res: Response, order: InvoiceOrder) {
       drawPlaceholder(imgX, imgY, imgSize, imgSize);
     }
 
-    // 2. Product Details
     const prodX = tableX + colImgW + 8;
     let detailTextY = rowY + 8;
 
-    setFont(9, true);
+    setFont(8.5, true);
     doc.fillColor(TEXT_MAIN).text(item.name, prodX, detailTextY, {
       width: colProductW - 16,
       height: 18,
@@ -357,11 +350,10 @@ export async function streamInvoicePdf(res: Response, order: InvoiceOrder) {
       .fillColor(TEXT_MUTED)
       .text(`Qty: ${item.quantity} × ${money(item.price)}`, prodX, detailTextY);
 
-    // 3. Price
     const priceX = tableX + colImgW + colProductW + 8;
     const totalItemPrice = Number(item.price) * Number(item.quantity);
 
-    setFont(9.5, true);
+    setFont(9, true);
     doc
       .fillColor(TEXT_MAIN)
       .text(money(totalItemPrice), priceX, rowY + (rowHeight - 6) / 2 - 6, {
@@ -374,16 +366,15 @@ export async function streamInvoicePdf(res: Response, order: InvoiceOrder) {
 
   /* =======================================================
      THANK YOU NOTE & FOOTER
-  ======================================================= */
+  ====================================================== */
   const noteY = rowY + 10;
   const noteWidth = cardWidth - 40;
 
-  // Soft Banner Box
   doc
     .roundedRect(cardX + 20, noteY, noteWidth, 34, 6)
     .fill(PRIMARY_LIGHT);
 
-  setFont(8.5, false);
+  setFont(8, false);
   doc.fillColor(PRIMARY).text(
     `প্রিয় ${order.fullName || "গ্রাহক"}, ShopScape-এ কেনাকাটা করার জন্য আপনাকে ধন্যবাদ।`,
     cardX + 20,
@@ -394,7 +385,6 @@ export async function streamInvoicePdf(res: Response, order: InvoiceOrder) {
     }
   );
 
-  // Footer Text (Bottom of Page)
   setFont(7.5);
   doc
     .fillColor(TEXT_MUTED)
