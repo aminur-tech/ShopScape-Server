@@ -22,12 +22,12 @@ const DEBUG_CHECKOUT = true;
 
 function checkoutLog(
   title: string,
-  data?: unknown
+  data?: unknown,
 ) {
   if (!DEBUG_CHECKOUT) return;
 
   console.log(
-    "\n=================================================="
+    "\n==================================================",
   );
 
   console.log(`[CHECKOUT] ${title}`);
@@ -40,20 +40,20 @@ function checkoutLog(
   }
 
   console.log(
-    "==================================================\n"
+    "==================================================\n",
   );
 }
 
 function checkoutError(
   title: string,
-  error?: unknown
+  error?: unknown,
 ) {
   console.error(
-    "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
   );
 
   console.error(
-    `[CHECKOUT ERROR] ${title}`
+    `[CHECKOUT ERROR] ${title}`,
   );
 
   if (error !== undefined) {
@@ -64,12 +64,12 @@ function checkoutError(
   }
 
   console.error(
-    "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
+    "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n",
   );
 }
 
 /* =========================================================
-   DHAKA SUB-URBAN AREAS
+   DHAKA SUBURBAN AREAS
 ========================================================= */
 
 const DHAKA_SUBURBAN_AREAS = [
@@ -117,20 +117,30 @@ const DELIVERY_CHARGES: Record<
    HELPERS
 ========================================================= */
 
-function normalize(value: string): string {
-  return value.trim().toLowerCase();
+function normalize(
+  value: string,
+): string {
+  return value
+    .trim()
+    .toLowerCase();
 }
 
+/* =========================================================
+   DHAKA SUBURBAN CHECK
+========================================================= */
+
 function isDhakaSuburbanArea(
-  area: string
+  area: string,
 ): boolean {
   const normalizedArea =
     normalize(area);
 
   return DHAKA_SUBURBAN_AREAS.some(
-    (item: DhakaSuburbanArea) =>
+    (
+      item: DhakaSuburbanArea,
+    ) =>
       normalize(item) ===
-      normalizedArea
+      normalizedArea,
   );
 }
 
@@ -141,7 +151,7 @@ function isDhakaSuburbanArea(
 function getDeliveryZone(
   division: string,
   district: string,
-  area: string
+  area: string,
 ): DeliveryZone {
   const normalizedDivision =
     normalize(division);
@@ -155,13 +165,11 @@ function getDeliveryZone(
       division,
       district,
       area,
-
       normalizedDivision,
       normalizedDistrict,
-
       isSuburban:
         isDhakaSuburbanArea(area),
-    }
+    },
   );
 
   /*
@@ -170,17 +178,24 @@ function getDeliveryZone(
 
   if (
     normalizedDivision ===
-      normalize("ঢাকা") &&
-    normalizedDistrict ===
+      normalize("Dhaka") ||
+    normalizedDivision ===
       normalize("ঢাকা")
   ) {
     if (
-      isDhakaSuburbanArea(area)
+      normalizedDistrict ===
+        normalize("Dhaka") ||
+      normalizedDistrict ===
+        normalize("ঢাকা")
     ) {
-      return "DHAKA_SUBURBAN";
-    }
+      if (
+        isDhakaSuburbanArea(area)
+      ) {
+        return "DHAKA_SUBURBAN";
+      }
 
-    return "DHAKA_CITY";
+      return "DHAKA_CITY";
+    }
   }
 
   /*
@@ -196,7 +211,7 @@ function getDeliveryZone(
 
 export async function getPaymentConfig(
   _req: Request,
-  res: Response
+  res: Response,
 ) {
   return res.json({
     bkashNumber:
@@ -213,36 +228,62 @@ export async function getPaymentConfig(
 
 const orderItemSchema =
   z.object({
+    /* -----------------------------------------------------
+       Product
+    ----------------------------------------------------- */
+
     productId: z
       .string()
+      .trim()
       .min(
         1,
-        "Product ID required"
+        "Product ID required",
       ),
+
+    /* -----------------------------------------------------
+       Quantity
+    ----------------------------------------------------- */
 
     quantity: z
       .number()
       .int(
-        "Quantity must be an integer"
+        "Quantity must be an integer",
       )
       .min(
         1,
-        "Quantity must be at least 1"
+        "Quantity must be at least 1",
       ),
+
+    /* -----------------------------------------------------
+       Optional Color
+       
+       null + undefined দুটোই accepted
+    ----------------------------------------------------- */
 
     selectedColor: z
       .string()
       .trim()
+      .nullable()
       .optional(),
+
+    /* -----------------------------------------------------
+       Optional Size
+    ----------------------------------------------------- */
 
     selectedSize: z
       .string()
       .trim()
+      .nullable()
       .optional(),
+
+    /* -----------------------------------------------------
+       Optional Image
+    ----------------------------------------------------- */
 
     selectedImageUrl: z
       .string()
       .url()
+      .nullable()
       .optional(),
   });
 
@@ -253,27 +294,27 @@ const orderItemSchema =
 export const placeOrderSchema =
   z
     .object({
-      /* =====================================================
+      /* ===================================================
          PRODUCTS
-      ===================================================== */
+      =================================================== */
 
       items: z
         .array(orderItemSchema)
         .min(
           1,
-          "কমপক্ষে একটি প্রোডাক্ট নির্বাচন করুন"
+          "কমপক্ষে একটি প্রোডাক্ট নির্বাচন করুন",
         ),
 
-      /* =====================================================
-         CUSTOMER INFORMATION
-      ===================================================== */
+      /* ===================================================
+         CUSTOMER
+      =================================================== */
 
       fullName: z
         .string()
         .trim()
         .min(
           2,
-          "নাম কমপক্ষে ২ অক্ষরের হতে হবে"
+          "নাম কমপক্ষে ২ অক্ষরের হতে হবে",
         ),
 
       phone: z
@@ -281,19 +322,34 @@ export const placeOrderSchema =
         .trim()
         .regex(
           /^01[3-9]\d{8}$/,
-          "সঠিক বাংলাদেশি মোবাইল নম্বর দিন"
+          "সঠিক বাংলাদেশি মোবাইল নম্বর দিন",
         ),
 
-      /* =====================================================
+      /* ===================================================
+         EMAIL
+
+         Frontend থেকে guestEmail পাঠানো হচ্ছে।
+      =================================================== */
+
+      guestEmail: z
+        .string()
+        .trim()
+        .email(
+          "সঠিক Email দিন",
+        )
+        .nullable()
+        .optional(),
+
+      /* ===================================================
          ADDRESS
-      ===================================================== */
+      =================================================== */
 
       division: z
         .string()
         .trim()
         .min(
           2,
-          "বিভাগ নির্বাচন করুন"
+          "বিভাগ নির্বাচন করুন",
         ),
 
       district: z
@@ -301,7 +357,7 @@ export const placeOrderSchema =
         .trim()
         .min(
           2,
-          "জেলা নির্বাচন করুন"
+          "জেলা নির্বাচন করুন",
         ),
 
       area: z
@@ -309,7 +365,7 @@ export const placeOrderSchema =
         .trim()
         .min(
           2,
-          "এলাকা / থানা নির্বাচন করুন"
+          "এলাকা / থানা নির্বাচন করুন",
         ),
 
       addressLine: z
@@ -317,24 +373,25 @@ export const placeOrderSchema =
         .trim()
         .min(
           4,
-          "সম্পূর্ণ ঠিকানা দিন"
+          "সম্পূর্ণ ঠিকানা দিন",
         ),
 
-      /* =====================================================
-         DELIVERY
+      /* ===================================================
+         DELIVERY ZONE
 
-         Frontend value is accepted for compatibility,
-         but backend calculates the actual zone.
-      ===================================================== */
+         Frontend পাঠালেও backend calculate করবে।
+      =================================================== */
 
       deliveryZone:
-        deliveryZoneSchema.default(
-          "OUTSIDE_DHAKA"
-        ),
+        deliveryZoneSchema
+          .optional()
+          .default(
+            "OUTSIDE_DHAKA",
+          ),
 
-      /* =====================================================
+      /* ===================================================
          PAYMENT
-      ===================================================== */
+      =================================================== */
 
       paymentMethod: z
         .enum([
@@ -344,26 +401,51 @@ export const placeOrderSchema =
         ])
         .default("COD"),
 
+      /* ===================================================
+         TRANSACTION ID
+      =================================================== */
+
       transactionId: z
         .string()
         .trim()
+        .nullable()
         .optional(),
+
+      /* ===================================================
+         PAYMENT PROOF
+
+         এখন optional রাখা হয়েছে কারণ frontend
+         screenshot পাঠাচ্ছে না।
+      =================================================== */
 
       paymentProofUrl: z
         .string()
         .url()
+        .nullable()
         .optional(),
     })
 
-    /* =======================================================
+    /* =====================================================
        PAYMENT VALIDATION
-    ======================================================= */
+    ===================================================== */
 
     .superRefine(
       (data, ctx) => {
         /*
-         * bKash / Nagad payment হলে
-         * Transaction ID required
+         * COD
+         *
+         * Transaction ID দরকার নেই।
+         */
+
+        if (
+          data.paymentMethod ===
+            "COD"
+        ) {
+          return;
+        }
+
+        /*
+         * BKASH / NAGAD
          */
 
         if (
@@ -388,28 +470,8 @@ export const placeOrderSchema =
                 "Transaction ID দিতে হবে",
             });
           }
-
-          /*
-           * Payment screenshot required
-           */
-
-          if (
-            !data.paymentProofUrl
-          ) {
-            ctx.addIssue({
-              code:
-                z.ZodIssueCode.custom,
-
-              path: [
-                "paymentProofUrl",
-              ],
-
-              message:
-                "Payment screenshot দিতে হবে",
-            });
-          }
         }
-      }
+      },
     );
 
 /* =========================================================
@@ -417,7 +479,7 @@ export const placeOrderSchema =
 ========================================================= */
 
 function calcDeliveryFee(
-  deliveryZone: DeliveryZone
+  deliveryZone: DeliveryZone,
 ): number {
   return DELIVERY_CHARGES[
     deliveryZone
@@ -430,7 +492,7 @@ function calcDeliveryFee(
 
 export async function placeOrder(
   req: Request,
-  res: Response
+  res: Response,
 ) {
   const requestId =
     `checkout-${Date.now()}-${Math.random()
@@ -438,25 +500,25 @@ export async function placeOrder(
       .slice(2, 8)}`;
 
   checkoutLog(
-    `START PLACE ORDER - ${requestId}`
+    `START PLACE ORDER - ${requestId}`,
   );
 
-  /* =======================================================
+  /* =====================================================
      REQUEST BODY
-  ======================================================= */
+  ===================================================== */
 
   checkoutLog(
     "Request body",
-    req.body
+    req.body,
   );
 
-  /* =======================================================
+  /* =====================================================
      VALIDATE BODY
-  ======================================================= */
+  ===================================================== */
 
   const parsed =
     placeOrderSchema.safeParse(
-      req.body
+      req.body,
     );
 
   if (!parsed.success) {
@@ -473,7 +535,17 @@ export async function placeOrder(
 
           code:
             issue.code,
-        })
+
+          received:
+            issue.path.reduce(
+              (
+                obj: any,
+                key,
+              ) =>
+                obj?.[key],
+              req.body,
+            ),
+        }),
       );
 
     checkoutError(
@@ -481,7 +553,7 @@ export async function placeOrder(
       {
         requestId,
         details,
-      }
+      },
     );
 
     return res.status(400).json({
@@ -501,27 +573,24 @@ export async function placeOrder(
     "REQUEST VALIDATION SUCCESS",
     {
       requestId,
-    }
+      paymentMethod:
+        body.paymentMethod,
+    },
   );
 
-  /* =======================================================
+  /* =====================================================
      DELIVERY ZONE
-  ======================================================= */
+  ===================================================== */
 
   /*
-   * IMPORTANT:
-   *
-   * Frontend deliveryZone কে trust করা হচ্ছে না।
-   *
-   * Backend division + district + area দেখে
-   * actual delivery zone determine করবে।
+   * Backend নিজে calculate করবে।
    */
 
   const deliveryZone =
     getDeliveryZone(
       body.division,
       body.district,
-      body.area
+      body.area,
     );
 
   checkoutLog(
@@ -532,17 +601,17 @@ export async function placeOrder(
 
       backend:
         deliveryZone,
-    }
+    },
   );
 
-  /* =======================================================
+  /* =====================================================
      PRODUCTS
-  ======================================================= */
+  ===================================================== */
 
   const productIds =
     body.items.map(
       (item) =>
-        item.productId
+        item.productId,
     );
 
   const uniqueProductIds = [
@@ -554,7 +623,7 @@ export async function placeOrder(
     {
       productIds,
       uniqueProductIds,
-    }
+    },
   );
 
   const products =
@@ -572,12 +641,12 @@ export async function placeOrder(
     {
       count:
         products.length,
-    }
+    },
   );
 
-  /* =======================================================
+  /* =====================================================
      CHECK MISSING PRODUCTS
-  ======================================================= */
+  ===================================================== */
 
   if (
     products.length !==
@@ -585,36 +654,34 @@ export async function placeOrder(
   ) {
     const foundIds =
       products.map(
-        (
-          product: (typeof products)[number]
-        ) =>
-          product.id
+        (product) =>
+          product.id,
       );
 
     const missingIds =
       uniqueProductIds.filter(
         (id) =>
-          !foundIds.includes(id)
+          !foundIds.includes(id),
       );
 
     checkoutError(
       "PRODUCTS NOT FOUND",
       {
         missingIds,
-      }
+      },
     );
 
     throw new AppError(
       `এক বা একাধিক প্রোডাক্ট পাওয়া যায়নি: ${missingIds.join(
-        ", "
+        ", ",
       )}`,
-      400
+      400,
     );
   }
 
-  /* =======================================================
-     SUBTOTAL + STOCK STATUS
-  ======================================================= */
+  /* =====================================================
+     SUBTOTAL
+  ===================================================== */
 
   let subtotal = 0;
 
@@ -623,31 +690,21 @@ export async function placeOrder(
       (item) => {
         const product =
           products.find(
-            (
-              product: (typeof products)[number]
-            ) =>
+            (product) =>
               product.id ===
-              item.productId
+              item.productId,
           );
 
         if (!product) {
           throw new AppError(
             "প্রোডাক্ট পাওয়া যায়নি",
-            400
+            400,
           );
         }
 
-        /* =================================================
-           STOCK STATUS
-           
-           stock = 1
-           → IN STOCK
-
-           stock = 0
-           → OUT OF STOCK
-
-           Quantity limit নেই।
-        ================================================= */
+        /* ===============================================
+           STOCK
+        =============================================== */
 
         checkoutLog(
           "STOCK STATUS CHECK",
@@ -663,94 +720,34 @@ export async function placeOrder(
 
             requestedQuantity:
               item.quantity,
-          }
+          },
         );
-
-        /* =================================================
-           OUT OF STOCK
-        ================================================= */
 
         if (
           product.stock === 0
         ) {
-          checkoutError(
-            "PRODUCT OUT OF STOCK",
-            {
-              product:
-                product.name,
-
-              stock:
-                product.stock,
-            }
-          );
-
           throw new AppError(
             `${product.name} বর্তমানে স্টকে নেই`,
-            400
+            400,
           );
         }
-
-        /* =================================================
-           INVALID NEGATIVE STOCK
-        ================================================= */
 
         if (
           product.stock < 0
         ) {
-          checkoutError(
-            "INVALID NEGATIVE STOCK",
-            {
-              productId:
-                product.id,
-
-              productName:
-                product.name,
-
-              stock:
-                product.stock,
-            }
-          );
-
           throw new AppError(
             `${product.name} এর stock status ভুল`,
-            400
+            400,
           );
         }
 
-        /* =================================================
+        /* ===============================================
            PRICE
-        ================================================= */
+        =============================================== */
 
         const unitPrice =
           product.discountPrice ??
           product.price;
-
-        checkoutLog(
-          "PRODUCT PRICE",
-          {
-            productId:
-              product.id,
-
-            productName:
-              product.name,
-
-            regularPrice:
-              product.price,
-
-            discountPrice:
-              product.discountPrice,
-
-            finalUnitPrice:
-              unitPrice,
-
-            quantity:
-              item.quantity,
-          }
-        );
-
-        /* =================================================
-           ITEM TOTAL
-        ================================================= */
 
         const itemTotal =
           unitPrice *
@@ -759,9 +756,9 @@ export async function placeOrder(
         subtotal +=
           itemTotal;
 
-        /* =================================================
+        /* ===============================================
            ORDER ITEM
-        ================================================= */
+        =============================================== */
 
         return {
           productId:
@@ -777,72 +774,49 @@ export async function placeOrder(
             item.quantity,
 
           selectedColor:
-            item.selectedColor,
+            item.selectedColor ??
+            null,
 
           selectedSize:
-            item.selectedSize,
+            item.selectedSize ??
+            null,
 
           selectedImageUrl:
-            item.selectedImageUrl,
+            item.selectedImageUrl ??
+            null,
         };
-      }
+      },
     );
 
-  /* =======================================================
-     SUBTOTAL LOG
-  ======================================================= */
-
-  checkoutLog(
-    "SUBTOTAL",
-    {
-      subtotal,
-      itemsData,
-    }
-  );
-
-  /* =======================================================
+  /* =====================================================
      DELIVERY FEE
-  ======================================================= */
+  ===================================================== */
 
   const deliveryFee =
     calcDeliveryFee(
-      deliveryZone
+      deliveryZone,
     );
 
-  checkoutLog(
-    "DELIVERY FEE",
-    {
-      deliveryZone,
-      deliveryFee,
-    }
-  );
-
-  /* =======================================================
+  /* =====================================================
      TOTAL
-  ======================================================= */
+  ===================================================== */
 
   const total =
     subtotal +
     deliveryFee;
 
   checkoutLog(
-    "FINAL TOTAL",
+    "FINAL PRICE",
     {
       subtotal,
       deliveryFee,
       total,
-    }
+    },
   );
 
-  /* =======================================================
+  /* =====================================================
      USER
-  ======================================================= */
-
-  /*
-   * Logged-in user হলে req.user.id থাকবে।
-   *
-   * Guest checkout হলে null হবে।
-   */
+  ===================================================== */
 
   const userId =
     req.user?.id ?? null;
@@ -855,12 +829,14 @@ export async function placeOrder(
         body.fullName,
       phone:
         body.phone,
-    }
+      guestEmail:
+        body.guestEmail,
+    },
   );
 
-  /* =======================================================
+  /* =====================================================
      CREATE ORDER
-  ======================================================= */
+  ===================================================== */
 
   let order;
 
@@ -868,32 +844,25 @@ export async function placeOrder(
     order =
       await prisma.$transaction(
         async (
-          tx: Prisma.TransactionClient
+          tx: Prisma.TransactionClient,
         ) => {
-          /* ===============================================
+          /* =============================================
              ORDER NUMBER
-          =============================================== */
+          ============================================= */
 
           const orderNumber =
             generateOrderNumber();
 
-          checkoutLog(
-            "GENERATED ORDER NUMBER",
-            {
-              orderNumber,
-            }
-          );
-
-          /* ===============================================
+          /* =============================================
              CREATE ORDER
-          =============================================== */
+          ============================================= */
 
           const created =
             await tx.order.create({
               data: {
-                /* =========================================
+                /* -----------------------------------------
                    BASIC
-                ========================================= */
+                ----------------------------------------- */
 
                 orderNumber,
 
@@ -902,22 +871,24 @@ export async function placeOrder(
                 status:
                   "PENDING",
 
-                /* =========================================
+                /* -----------------------------------------
                    PAYMENT
-                ========================================= */
+                ----------------------------------------- */
 
                 paymentMethod:
                   body.paymentMethod,
 
                 transactionId:
-                  body.transactionId,
+                  body.transactionId ??
+                  null,
 
                 paymentProofUrl:
-                  body.paymentProofUrl,
+                  body.paymentProofUrl ??
+                  null,
 
-                /* =========================================
+                /* -----------------------------------------
                    CUSTOMER
-                ========================================= */
+                ----------------------------------------- */
 
                 fullName:
                   body.fullName,
@@ -925,9 +896,24 @@ export async function placeOrder(
                 phone:
                   body.phone,
 
-                /* =========================================
+                /*
+                 * IMPORTANT:
+                 *
+                 * guestEmail শুধুমাত্র তখনই রাখবেন
+                 * যদি Prisma Order model-এ guestEmail
+                 * field থাকে।
+                 */
+
+                ...(body.guestEmail
+                  ? {
+                      guestEmail:
+                        body.guestEmail,
+                    }
+                  : {}),
+
+                /* -----------------------------------------
                    ADDRESS
-                ========================================= */
+                ----------------------------------------- */
 
                 division:
                   body.division,
@@ -941,9 +927,9 @@ export async function placeOrder(
                 addressLine:
                   body.addressLine,
 
-                /* =========================================
+                /* -----------------------------------------
                    PRICE
-                ========================================= */
+                ----------------------------------------- */
 
                 subtotal,
 
@@ -951,9 +937,9 @@ export async function placeOrder(
 
                 total,
 
-                /* =========================================
-                   ORDER ITEMS
-                ========================================= */
+                /* -----------------------------------------
+                   ITEMS
+                ----------------------------------------- */
 
                 items: {
                   create:
@@ -980,77 +966,27 @@ export async function placeOrder(
 
               itemCount:
                 created.items.length,
-            }
-          );
-
-          /* ===============================================
-             STOCK NOT DECREMENTED
-
-             stock is availability flag:
-
-             1 = available
-             0 = unavailable
-
-             Example:
-
-             Product stock = 1
-             Customer quantity = 2
-
-             Order quantity = 2 ✅
-             Product stock = 1 ✅
-
-             Customer quantity = 5
-
-             Order quantity = 5 ✅
-             Product stock = 1 ✅
-
-             তাই এখানে stock decrement হবে না।
-          =============================================== */
-
-          checkoutLog(
-            "STOCK NOT DECREMENTED",
-            {
-              reason:
-                "stock is availability flag",
-
-              meaning:
-                "1 = available, 0 = unavailable",
-            }
+            },
           );
 
           return created;
-        }
+        },
       );
-
-    /* =====================================================
-       TRANSACTION SUCCESS
-    ===================================================== */
-
-    checkoutLog(
-      "DATABASE TRANSACTION SUCCESS",
-      {
-        orderId:
-          order.id,
-
-        orderNumber:
-          order.orderNumber,
-      }
-    );
   } catch (error) {
     checkoutError(
       "ORDER TRANSACTION FAILED",
       {
         requestId,
         error,
-      }
+      },
     );
 
     throw error;
   }
 
-  /* =======================================================
+  /* =====================================================
      ORDER EVENT
-  ======================================================= */
+  ===================================================== */
 
   try {
     orderEvents.emit(
@@ -1060,7 +996,7 @@ export async function placeOrder(
 
         status:
           order.status,
-      }
+      },
     );
 
     checkoutLog(
@@ -1071,25 +1007,24 @@ export async function placeOrder(
 
         status:
           order.status,
-      }
+      },
     );
   } catch (error) {
     checkoutError(
       "ORDER EVENT FAILED",
-      error
+      error,
     );
 
     /*
-     * Order already successfully created.
+     * Order already created.
      *
-     * তাই event fail হওয়ার কারণে
-     * customer order fail দেখানো হচ্ছে না।
+     * Event fail হলেও order success থাকবে।
      */
   }
 
-  /* =======================================================
+  /* =====================================================
      FINAL RESPONSE
-  ======================================================= */
+  ===================================================== */
 
   checkoutLog(
     "CHECKOUT SUCCESS",
@@ -1110,7 +1045,7 @@ export async function placeOrder(
 
       total:
         order.total,
-    }
+    },
   );
 
   return res.status(201).json({

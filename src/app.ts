@@ -1,19 +1,11 @@
-import express, {
-  type Request,
-  type Response,
-} from "express";
-
+import express, { type Request, type Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 
 import { env } from "./config/env";
 import routes from "./routes";
-
-import {
-  errorHandler,
-  notFoundHandler,
-} from "./middleware/errorHandler";
+import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 
 export const app = express();
 
@@ -24,11 +16,19 @@ export const app = express();
 app.use(
   helmet({
     crossOriginResourcePolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        // Next.js frontend origin ke iframe embedding er permission dibe
+        "frame-ancestors": ["'self'", env.FRONTEND_URL],
+      },
+    },
+    frameguard: false, // iframe embedding restrict block off korar jonno
   })
 );
 
 /* -------------------------------------------------------------------------- */
-/* CORS                                                                       */
+/* CORS                                                                      */
 /* -------------------------------------------------------------------------- */
 
 app.use(
@@ -56,7 +56,7 @@ app.use(
 );
 
 /* -------------------------------------------------------------------------- */
-/* Logger                                                                     */
+/* Logger                                                                    */
 /* -------------------------------------------------------------------------- */
 
 app.use(
@@ -68,36 +68,26 @@ app.use(
 );
 
 /* -------------------------------------------------------------------------- */
-/* API Root                                                                    */
+/* API Root                                                                  */
 /* -------------------------------------------------------------------------- */
 
-app.get(
-  "/",
-  (_req: Request, res: Response) => {
-    res.status(200).json({
-      status: "ok",
-      message: "ShopScape API is running 🚀",
-      environment: env.isProd
-        ? "production"
-        : "development",
-    });
-  }
-);
+app.get("/", (_req: Request, res: Response) => {
+  res.status(200).json({
+    status: "ok",
+    message: "ShopScape API is running 🚀",
+    environment: env.isProd ? "production" : "development",
+  });
+});
 
 /* -------------------------------------------------------------------------- */
-/* API Routes                                                                  */
+/* API Routes                                                                */
 /* -------------------------------------------------------------------------- */
 
 app.use("/api", routes);
 
 /* -------------------------------------------------------------------------- */
-/* 404                                                                         */
+/* 404 & Error Handling                                                      */
 /* -------------------------------------------------------------------------- */
 
 app.use(notFoundHandler);
-
-/* -------------------------------------------------------------------------- */
-/* Error Handler                                                               */
-/* -------------------------------------------------------------------------- */
-
 app.use(errorHandler);

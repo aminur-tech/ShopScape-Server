@@ -1,6 +1,6 @@
 import PDFDocument from "pdfkit";
 import type { Response } from "express";
-import type { Order, OrderItem } from "../generated/prisma/client"
+import type { Order, OrderItem } from "../generated/prisma/client";
 import fs from "fs";
 import path from "path";
 
@@ -15,9 +15,7 @@ const FONT_PATH = path.join(
 const hasBanglaFont = fs.existsSync(FONT_PATH);
 
 if (!hasBanglaFont) {
-  console.error(
-    `[invoice] Bangla font not found at ${FONT_PATH}`
-  );
+  console.error(`[invoice] Bangla font not found at ${FONT_PATH}`);
 }
 
 type InvoiceOrder = Order & {
@@ -55,30 +53,22 @@ async function fetchImageBuffer(
       console.error(
         `[invoice] Image request failed: ${response.status} ${url}`
       );
-
       return null;
     }
 
-    const contentType =
-      response.headers.get("content-type") || "";
+    const contentType = response.headers.get("content-type") || "";
 
     if (!contentType.startsWith("image/")) {
       console.error(
         `[invoice] Invalid image content type: ${contentType}`
       );
-
       return null;
     }
 
     const arrayBuffer = await response.arrayBuffer();
-
     return Buffer.from(arrayBuffer);
   } catch (error) {
-    console.error(
-      "[invoice] Image fetch error:",
-      error
-    );
-
+    console.error("[invoice] Image fetch error:", error);
     return null;
   }
 }
@@ -95,7 +85,6 @@ export async function streamInvoicePdf(
     size: "A4",
     margin: 0,
     bufferPages: true,
-
     info: {
       Title: `Invoice ${order.orderNumber}`,
       Author: "ShopScape",
@@ -105,17 +94,15 @@ export async function streamInvoicePdf(
   });
 
   /* =======================================================
-     RESPONSE
+     RESPONSE (FIXED FOR INLINE PREVIEW)
   ======================================================= */
 
-  res.setHeader(
-    "Content-Type",
-    "application/pdf"
-  );
+  res.setHeader("Content-Type", "application/pdf");
 
+  // Changed from attachment to inline to support preview
   res.setHeader(
     "Content-Disposition",
-    `attachment; filename="invoice-${order.orderNumber}.pdf"`
+    `inline; filename="invoice-${order.orderNumber}.pdf"`
   );
 
   doc.pipe(res);
@@ -145,22 +132,13 @@ export async function streamInvoicePdf(
   const pageHeight = doc.page.height;
 
   const margin = 35;
-
-  const contentWidth =
-    pageWidth - margin * 2;
+  const contentWidth = pageWidth - margin * 2;
 
   /* =======================================================
      BACKGROUND
   ======================================================= */
 
-  doc
-    .rect(
-      0,
-      0,
-      pageWidth,
-      pageHeight
-    )
-    .fill(BG);
+  doc.rect(0, 0, pageWidth, pageHeight).fill(BG);
 
   /* =======================================================
      HELPERS
@@ -172,31 +150,19 @@ export async function streamInvoicePdf(
     } else {
       doc.font("Helvetica");
     }
-
     doc.fontSize(size);
   }
 
-  function money(
-    value:
-      | number
-      | string
-      | null
-      | undefined
-  ) {
-    return `৳${Number(
-      value ?? 0
-    ).toLocaleString("en-BD")}`;
+  function money(value: number | string | null | undefined) {
+    return `৳${Number(value ?? 0).toLocaleString("en-BD")}`;
   }
 
   function formatDate(date: Date) {
-    return new Intl.DateTimeFormat(
-      "en-BD",
-      {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }
-    ).format(new Date(date));
+    return new Intl.DateTimeFormat("en-BD", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }).format(new Date(date));
   }
 
   function roundedCard(
@@ -206,18 +172,7 @@ export async function streamInvoicePdf(
     height: number,
     radius = 8
   ) {
-    doc
-      .roundedRect(
-        x,
-        y,
-        width,
-        height,
-        radius
-      )
-      .fillAndStroke(
-        WHITE,
-        BORDER
-      );
+    doc.roundedRect(x, y, width, height, radius).fillAndStroke(WHITE, BORDER);
   }
 
   function drawLine(
@@ -227,12 +182,7 @@ export async function streamInvoicePdf(
     y2: number,
     color = BORDER
   ) {
-    doc
-      .moveTo(x1, y1)
-      .lineTo(x2, y2)
-      .strokeColor(color)
-      .lineWidth(1)
-      .stroke();
+    doc.moveTo(x1, y1).lineTo(x2, y2).strokeColor(color).lineWidth(1).stroke();
   }
 
   function drawPlaceholder(
@@ -241,29 +191,14 @@ export async function streamInvoicePdf(
     width: number,
     height: number
   ) {
-    doc
-      .roundedRect(
-        x,
-        y,
-        width,
-        height,
-        6
-      )
-      .fill(IMAGE_BG);
+    doc.roundedRect(x, y, width, height, 6).fill(IMAGE_BG);
 
     setFont(7);
 
-    doc
-      .fillColor(MUTED)
-      .text(
-        "No Image",
-        x,
-        y + height / 2 - 4,
-        {
-          width,
-          align: "center",
-        }
-      );
+    doc.fillColor(MUTED).text("No Image", x, y + height / 2 - 4, {
+      width,
+      align: "center",
+    });
   }
 
   /* =======================================================
@@ -276,12 +211,7 @@ export async function streamInvoicePdf(
 
   const mainCardHeight = 700;
 
-  roundedCard(
-    cardX,
-    cardY,
-    cardWidth,
-    mainCardHeight
-  );
+  roundedCard(cardX, cardY, cardWidth, mainCardHeight);
 
   /* =======================================================
      TITLE
@@ -289,55 +219,27 @@ export async function streamInvoicePdf(
 
   setFont(17);
 
-  doc
-    .fillColor(PURPLE)
-    .text(
-      "INVOICE",
-      cardX,
-      cardY + 22,
-      {
-        width: cardWidth,
-        align: "center",
-      }
-    );
+  doc.fillColor(PURPLE).text("INVOICE", cardX, cardY + 22, {
+    width: cardWidth,
+    align: "center",
+  });
 
   /* =======================================================
      LOGO
   ======================================================= */
 
   const logoSize = 45;
+  const logoX = cardX + cardWidth / 2 - logoSize / 2;
+  const logoY = cardY + 58;
 
-  const logoX =
-    cardX +
-    cardWidth / 2 -
-    logoSize / 2;
-
-  const logoY =
-    cardY + 58;
-
-  doc
-    .roundedRect(
-      logoX,
-      logoY,
-      logoSize,
-      logoSize,
-      11
-    )
-    .fill(ORANGE);
+  doc.roundedRect(logoX, logoY, logoSize, logoSize, 11).fill(ORANGE);
 
   setFont(27);
 
-  doc
-    .fillColor(WHITE)
-    .text(
-      "S",
-      logoX,
-      logoY + 5,
-      {
-        width: logoSize,
-        align: "center",
-      }
-    );
+  doc.fillColor(WHITE).text("S", logoX, logoY + 5, {
+    width: logoSize,
+    align: "center",
+  });
 
   /* =======================================================
      SHOP NAME
@@ -345,38 +247,23 @@ export async function streamInvoicePdf(
 
   setFont(16);
 
-  doc
-    .fillColor(TEXT)
-    .text(
-      "ShopScape",
-      cardX,
-      logoY + 54,
-      {
-        width: cardWidth,
-        align: "center",
-      }
-    );
+  doc.fillColor(TEXT).text("ShopScape", cardX, logoY + 54, {
+    width: cardWidth,
+    align: "center",
+  });
 
   setFont(9);
 
-  doc
-    .fillColor(MUTED)
-    .text(
-      "Mohammadpur, Dhaka, Bangladesh",
-      cardX,
-      logoY + 77,
-      {
-        width: cardWidth,
-        align: "center",
-      }
-    );
+  doc.fillColor(MUTED).text("Mohammadpur, Dhaka, Bangladesh", cardX, logoY + 77, {
+    width: cardWidth,
+    align: "center",
+  });
 
   /* =======================================================
      DIVIDER
   ======================================================= */
 
-  const dividerY =
-    logoY + 110;
+  const dividerY = logoY + 110;
 
   drawLine(
     cardX + 20,
@@ -389,72 +276,30 @@ export async function streamInvoicePdf(
      ORDER INFO
   ======================================================= */
 
-  let infoY =
-    dividerY + 22;
+  let infoY = dividerY + 22;
 
-  const labelX =
-    cardX + 25;
-
-  const valueX =
-    cardX + 105;
+  const labelX = cardX + 25;
+  const valueX = cardX + 105;
 
   setFont(9);
 
-  doc
-    .fillColor(TEXT)
-    .text(
-      "Order ID",
-      labelX,
-      infoY
-    );
-
-  doc.text(
-    `: ${order.orderNumber}`,
-    valueX,
-    infoY
-  );
+  doc.fillColor(TEXT).text("Order ID", labelX, infoY);
+  doc.text(`: ${order.orderNumber}`, valueX, infoY);
 
   infoY += 19;
 
-  doc.text(
-    "Date",
-    labelX,
-    infoY
-  );
-
-  doc.text(
-    `: ${formatDate(order.createdAt)}`,
-    valueX,
-    infoY
-  );
+  doc.text("Date", labelX, infoY);
+  doc.text(`: ${formatDate(order.createdAt)}`, valueX, infoY);
 
   infoY += 19;
 
-  doc.text(
-    "Mobile",
-    labelX,
-    infoY
-  );
-
-  doc.text(
-    `: ${order.phone}`,
-    valueX,
-    infoY
-  );
+  doc.text("Mobile", labelX, infoY);
+  doc.text(`: ${order.phone}`, valueX, infoY);
 
   infoY += 19;
 
-  doc.text(
-    "Name",
-    labelX,
-    infoY
-  );
-
-  doc.text(
-    `: ${order.fullName}`,
-    valueX,
-    infoY
-  );
+  doc.text("Name", labelX, infoY);
+  doc.text(`: ${order.fullName}`, valueX, infoY);
 
   infoY += 19;
 
@@ -471,21 +316,11 @@ export async function streamInvoicePdf(
     .filter(Boolean)
     .join(" > ");
 
-  doc.text(
-    "Address",
-    labelX,
-    infoY
-  );
-
-  doc.text(
-    `: ${address || "N/A"}`,
-    valueX,
-    infoY,
-    {
-      width: cardWidth - 145,
-      height: 35,
-    }
-  );
+  doc.text("Address", labelX, infoY);
+  doc.text(`: ${address || "N/A"}`, valueX, infoY, {
+    width: cardWidth - 145,
+    height: 35,
+  });
 
   infoY += 30;
 
@@ -493,11 +328,7 @@ export async function streamInvoicePdf(
      PAYMENT
   ======================================================= */
 
-  doc.text(
-    "Payment",
-    labelX,
-    infoY
-  );
+  doc.text("Payment", labelX, infoY);
 
   const paymentLabel =
     order.paymentMethod === "BKASH"
@@ -506,11 +337,7 @@ export async function streamInvoicePdf(
       ? "Nagad"
       : "Cash on Delivery";
 
-  doc.text(
-    `: ${paymentLabel}`,
-    valueX,
-    infoY
-  );
+  doc.text(`: ${paymentLabel}`, valueX, infoY);
 
   infoY += 19;
 
@@ -518,45 +345,23 @@ export async function streamInvoicePdf(
      TOTAL
   ======================================================= */
 
-  doc
-    .fillColor(PINK)
-    .text(
-      "Total",
-      labelX,
-      infoY
-    );
+  doc.fillColor(PINK).text("Total", labelX, infoY);
 
   setFont(10);
 
-  doc
-    .fillColor(PINK)
-    .text(
-      `: ${money(order.total)}`,
-      valueX,
-      infoY
-    );
+  doc.fillColor(PINK).text(`: ${money(order.total)}`, valueX, infoY);
 
   /* =======================================================
      ITEMS TABLE
   ======================================================= */
 
-  const tableX =
-    cardX + 20;
-
-  const tableY =
-    infoY + 27;
-
-  const tableWidth =
-    cardWidth - 40;
+  const tableX = cardX + 20;
+  const tableY = infoY + 27;
+  const tableWidth = cardWidth - 40;
 
   const imageWidth = 75;
-
   const productWidth = 315;
-
-  const priceWidth =
-    tableWidth -
-    imageWidth -
-    productWidth;
+  const priceWidth = tableWidth - imageWidth - productWidth;
 
   const headerHeight = 29;
 
@@ -564,95 +369,41 @@ export async function streamInvoicePdf(
      TABLE HEADER
   ======================================================= */
 
-  doc
-    .rect(
-      tableX,
-      tableY,
-      tableWidth,
-      headerHeight
-    )
-    .fill(LIGHT);
-
-  doc
-    .rect(
-      tableX,
-      tableY,
-      tableWidth,
-      headerHeight
-    )
-    .strokeColor(BORDER)
-    .stroke();
+  doc.rect(tableX, tableY, tableWidth, headerHeight).fill(LIGHT);
+  doc.rect(tableX, tableY, tableWidth, headerHeight).strokeColor(BORDER).stroke();
 
   setFont(8.5);
 
-  doc
-    .fillColor(TEXT)
-    .text(
-      "Image",
-      tableX + 8,
-      tableY + 9
-    );
-
-  doc.text(
-    "Product",
-    tableX +
-      imageWidth +
-      8,
-    tableY + 9
-  );
-
-  doc.text(
-    "Total",
-    tableX +
-      imageWidth +
-      productWidth +
-      8,
-    tableY + 9
-  );
+  doc.fillColor(TEXT).text("Image", tableX + 8, tableY + 9);
+  doc.text("Product", tableX + imageWidth + 8, tableY + 9);
+  doc.text("Total", tableX + imageWidth + productWidth + 8, tableY + 9);
 
   /* =======================================================
      FETCH PRODUCT IMAGES
   ======================================================= */
 
-  const itemImages =
-    await Promise.all(
-      order.items.map(
-        async (item: (typeof order.items)[number]) => {
-          console.log(
-            `[invoice] Product: ${item.name}`
-          );
+  const itemImages = await Promise.all(
+    order.items.map(async (item: (typeof order.items)[number]) => {
+      console.log(`[invoice] Product: ${item.name}`);
+      console.log(
+        `[invoice] Image URL: ${item.selectedImageUrl ?? "null"}`
+      );
 
-          console.log(
-            `[invoice] Image URL: ${
-              item.selectedImageUrl ?? "null"
-            }`
-          );
+      if (!item.selectedImageUrl) {
+        return null;
+      }
 
-          if (!item.selectedImageUrl) {
-            return null;
-          }
-
-          return fetchImageBuffer(
-            item.selectedImageUrl
-          );
-        }
-      )
-    );
+      return fetchImageBuffer(item.selectedImageUrl);
+    })
+  );
 
   /* =======================================================
      TABLE ROWS
   ======================================================= */
 
-  let currentY =
-    tableY +
-    headerHeight;
+  let currentY = tableY + headerHeight;
 
-  for (
-    const [
-      index,
-      item,
-    ] of order.items.entries()
-  ) {
+  for (const [index, item] of order.items.entries()) {
     const rowHeight = 82;
 
     /* =====================================================
@@ -660,16 +411,8 @@ export async function streamInvoicePdf(
     ===================================================== */
 
     doc
-      .rect(
-        tableX,
-        currentY,
-        tableWidth,
-        rowHeight
-      )
-      .fillAndStroke(
-        WHITE,
-        BORDER
-      );
+      .rect(tableX, currentY, tableWidth, rowHeight)
+      .fillAndStroke(WHITE, BORDER);
 
     /* =====================================================
        SEPARATORS
@@ -683,13 +426,9 @@ export async function streamInvoicePdf(
     );
 
     drawLine(
-      tableX +
-        imageWidth +
-        productWidth,
+      tableX + imageWidth + productWidth,
       currentY,
-      tableX +
-        imageWidth +
-        productWidth,
+      tableX + imageWidth + productWidth,
       currentY + rowHeight
     );
 
@@ -697,150 +436,80 @@ export async function streamInvoicePdf(
        PRODUCT IMAGE
     ===================================================== */
 
-    const imageX =
-      tableX + 9;
-
-    const imageY =
-      currentY + 8;
-
+    const imageX = tableX + 9;
+    const imageY = currentY + 8;
     const imageSize = 64;
 
-    const imageBuffer =
-      itemImages[index];
+    const imageBuffer = itemImages[index];
 
     if (imageBuffer) {
       try {
-        doc.image(
-          imageBuffer,
-          imageX,
-          imageY,
-          {
-            fit: [
-              imageSize,
-              imageSize,
-            ],
-            align: "center",
-            valign: "center",
-          }
-        );
+        doc.image(imageBuffer, imageX, imageY, {
+          fit: [imageSize, imageSize],
+          align: "center",
+          valign: "center",
+        });
       } catch (error) {
-        console.error(
-          "[invoice] PDF image render failed:",
-          error
-        );
-
-        drawPlaceholder(
-          imageX,
-          imageY,
-          imageSize,
-          imageSize
-        );
+        console.error("[invoice] PDF image render failed:", error);
+        drawPlaceholder(imageX, imageY, imageSize, imageSize);
       }
     } else {
-      drawPlaceholder(
-        imageX,
-        imageY,
-        imageSize,
-        imageSize
-      );
+      drawPlaceholder(imageX, imageY, imageSize, imageSize);
     }
 
     /* =====================================================
        PRODUCT DETAILS
     ===================================================== */
 
-    const productX =
-      tableX +
-      imageWidth +
-      8;
+    const productX = tableX + imageWidth + 8;
 
     /* Product Name */
 
     setFont(9);
 
-    doc
-      .fillColor(TEXT)
-      .text(
-        item.name,
-        productX,
-        currentY + 8,
-        {
-          width:
-            productWidth - 18,
-          height: 22,
-          ellipsis: true,
-        }
-      );
+    doc.fillColor(TEXT).text(item.name, productX, currentY + 8, {
+      width: productWidth - 18,
+      height: 22,
+      ellipsis: true,
+    });
 
     /* =====================================================
        SIZE / COLOR / QUANTITY
     ===================================================== */
 
-    let detailY =
-      currentY + 31;
+    let detailY = currentY + 31;
 
     if (item.selectedSize) {
       setFont(8);
-
-      doc
-        .fillColor(MUTED)
-        .text(
-          `Size: ${item.selectedSize}`,
-          productX,
-          detailY
-        );
-
+      doc.fillColor(MUTED).text(`Size: ${item.selectedSize}`, productX, detailY);
       detailY += 14;
     }
 
     if (item.selectedColor) {
       setFont(8);
-
-      doc
-        .fillColor(MUTED)
-        .text(
-          `Color: ${item.selectedColor}`,
-          productX,
-          detailY
-        );
-
+      doc.fillColor(MUTED).text(`Color: ${item.selectedColor}`, productX, detailY);
       detailY += 14;
     }
 
     setFont(8);
-
-    doc
-      .fillColor(MUTED)
-      .text(
-        `Quantity: ${item.quantity}`,
-        productX,
-        detailY
-      );
+    doc.fillColor(MUTED).text(`Quantity: ${item.quantity}`, productX, detailY);
 
     /* =====================================================
        PRICE
     ===================================================== */
 
-    const priceX =
-      tableX +
-      imageWidth +
-      productWidth +
-      8;
+    const priceX = tableX + imageWidth + productWidth + 8;
 
     setFont(9.5);
 
     doc
       .fillColor(PINK)
       .text(
-        money(
-          Number(item.price) *
-            Number(item.quantity)
-        ),
+        money(Number(item.price) * Number(item.quantity)),
         priceX,
         currentY + 30,
         {
-          width:
-            priceWidth - 12,
+          width: priceWidth - 12,
         }
       );
 
@@ -851,8 +520,7 @@ export async function streamInvoicePdf(
      THANK YOU
   ======================================================= */
 
-  const thankYouY =
-    currentY + 17;
+  const thankYouY = currentY + 17;
 
   setFont(9);
 
@@ -865,8 +533,7 @@ export async function streamInvoicePdf(
       cardX + 20,
       thankYouY,
       {
-        width:
-          cardWidth - 40,
+        width: cardWidth - 40,
         align: "center",
       }
     );
@@ -877,17 +544,15 @@ export async function streamInvoicePdf(
 
   setFont(7.5);
 
-  doc
-    .fillColor("#999999")
-    .text(
-      `ShopScape • Invoice ${order.orderNumber}`,
-      cardX,
-      pageHeight - 28,
-      {
-        width: cardWidth,
-        align: "center",
-      }
-    );
+  doc.fillColor("#999999").text(
+    `ShopScape • Invoice ${order.orderNumber}`,
+    cardX,
+    pageHeight - 28,
+    {
+      width: cardWidth,
+      align: "center",
+    }
+  );
 
   /* =======================================================
      END
