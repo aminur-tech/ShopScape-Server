@@ -10,7 +10,7 @@ import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 export const app = express();
 
 /* -------------------------------------------------------------------------- */
-/* Security                                                                   */
+/* Security                                                                  */
 /* -------------------------------------------------------------------------- */
 
 app.use(
@@ -19,22 +19,22 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-        // Next.js frontend origin ke iframe embedding er permission dibe
         "frame-ancestors": ["'self'", env.FRONTEND_URL],
       },
     },
-    frameguard: false, // iframe embedding restrict block off korar jonno
+    frameguard: false,
   })
 );
 
 /* -------------------------------------------------------------------------- */
-/* CORS                                                                      */
+/* CORS (EXPOSED HEADERS ADDED)                                               */
 /* -------------------------------------------------------------------------- */
 
 app.use(
   cors({
     origin: env.FRONTEND_URL,
     credentials: true,
+    exposedHeaders: ["Content-Disposition"],
   })
 );
 

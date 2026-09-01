@@ -72,12 +72,15 @@ export async function streamInvoicePdf(res: Response, order: InvoiceOrder) {
     },
   });
 
-  // Response headers for browser stream/preview
+  /* =======================================================
+     RESPONSE HEADERS (FIXED FOR DIRECT DOWNLOAD)
+  ======================================================= */
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
     "Content-Disposition",
-    `inline; filename="invoice-${order.orderNumber}.pdf"`
+    `attachment; filename="invoice-${order.orderNumber}.pdf"`
   );
+  res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
 
   doc.pipe(res);
 
