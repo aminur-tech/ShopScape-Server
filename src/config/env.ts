@@ -40,6 +40,10 @@ export const env = {
     process.env.NODE_ENV ??
     "development",
 
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY ?? "",
+  GEMINI_MODEL: process.env.GEMINI_MODEL ?? "gemini-3.5-flash",
+  GEMINI_TIMEOUT_MS: Number(process.env.GEMINI_TIMEOUT_MS ?? 30000),
+
   isProd:
     process.env.NODE_ENV ===
     "production",

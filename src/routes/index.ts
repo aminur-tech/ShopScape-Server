@@ -7,6 +7,7 @@ import orderRoutes from "./order.routes";
 import adminRoutes from "./admin.routes";
 import bannerRoutes from "./banner.routes";
 import uploadRoutes from "./upload.routes";
+import searchRoutes from "./search.routes";
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use("/orders", orderRoutes);
 router.use("/admin", adminRoutes);
 router.use("/banners", bannerRoutes);
 router.use("/uploads", uploadRoutes);
+router.use("/search", searchRoutes);
 
 export default router;

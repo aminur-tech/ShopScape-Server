@@ -113,9 +113,12 @@ export async function listProducts(
      * First find the requested category.
      */
     const mainCategory =
-      await prisma.category.findUnique({
+      await prisma.category.findFirst({
         where: {
-          slug: category,
+          OR: [
+            { slug: category },
+            { name: { equals: category, mode: "insensitive" } },
+          ],
         },
 
         select: {
