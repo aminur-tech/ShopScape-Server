@@ -100,6 +100,30 @@ export const env = {
     "01XXXXXXXXX",
 
   /* =======================================================
+     META CONVERSIONS API (server-side Purchase event)
+
+     সব optional — সেট না থাকলে sendPurchaseEvent() চুপচাপ
+     skip করবে, সার্ভার crash করবে না।
+  ======================================================= */
+
+  META_PIXEL_ID:
+    process.env.META_PIXEL_ID ?? "",
+
+  META_CAPI_ACCESS_TOKEN:
+    process.env.META_CAPI_ACCESS_TOKEN ?? "",
+
+  META_CAPI_API_VERSION:
+    process.env.META_CAPI_API_VERSION ??
+    "v21.0",
+
+  // Events Manager → Test events, দিয়ে যাচাই করার জন্য
+  META_TEST_EVENT_CODE:
+    process.env.META_TEST_EVENT_CODE ?? "",
+
+  META_CURRENCY:
+    process.env.META_CURRENCY ?? "BDT",
+
+  /* =======================================================
      ADMIN
   ======================================================= */
 
