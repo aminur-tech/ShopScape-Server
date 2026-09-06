@@ -9,6 +9,11 @@ import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 
 export const app = express();
 
+const allowedOrigins = env.FRONTEND_URL
+  .split(",")
+  .map((origin) => origin.trim().replace(/\/$/, ""))
+  .filter(Boolean);
+
 /* -------------------------------------------------------------------------- */
 /* Security                                                                  */
 /* -------------------------------------------------------------------------- */
@@ -32,7 +37,14 @@ app.use(
 
 app.use(
   cors({
-    origin: env.FRONTEND_URL,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin.replace(/\/$/, ""))) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error("Origin is not allowed by CORS"));
+    },
     credentials: true,
     exposedHeaders: ["Content-Disposition"],
   })
